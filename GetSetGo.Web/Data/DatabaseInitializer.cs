@@ -11,15 +11,28 @@ public sealed class DatabaseInitializer(IConfiguration configuration, IPasswordS
             ?? throw new InvalidOperationException("GetSetGoDb connection string is missing.");
         var builder = new SqlConnectionStringBuilder(connectionString);
         var databaseName = builder.InitialCatalog;
-        if (string.IsNullOrWhiteSpace(databaseName) || databaseName.Any(c => !char.IsLetterOrDigit(c) && c != '_'))
-            throw new InvalidOperationException("The database name may contain only letters, numbers, and underscores.");
+        if (string.IsNullOrWhiteSpace(databaseName) || databaseName.Length > 128)
+            throw new InvalidOperationException("A database name (Initial Catalog) between 1 and 128 characters is required.");
 
-        builder.InitialCatalog = "master";
-        await using (var master = new SqlConnection(builder.ConnectionString))
+        // Azure SQL databases are provisioned separately; connect directly to the
+        // configured catalog without requiring access to the logical server's master.
+        var server = builder.DataSource;
+        if (server.StartsWith("tcp:", StringComparison.OrdinalIgnoreCase)) server = server[4..];
+        var host = server.Split(',')[0].Trim().TrimEnd('.');
+        var isAzureSql = host.EndsWith(".database.windows.net", StringComparison.OrdinalIgnoreCase);
+        var createDatabase = configuration.GetValue<bool?>("Database:CreateIfMissing") ?? !isAzureSql;
+        if (createDatabase)
         {
+            builder.InitialCatalog = "master";
+            await using var master = new SqlConnection(builder.ConnectionString);
             await master.OpenAsync();
             await using var create = master.CreateCommand();
-            create.CommandText = $"IF DB_ID(N'{databaseName}') IS NULL CREATE DATABASE [{databaseName}];";
+            // Parameterize the lookup and quote the identifier independently.
+            // This supports names such as get-set-go without allowing SQL injection.
+            using var commands = new SqlCommandBuilder();
+            var quotedName = commands.QuoteIdentifier(databaseName);
+            create.CommandText = $"IF DB_ID(@DatabaseName) IS NULL CREATE DATABASE {quotedName};";
+            create.Parameters.Add("@DatabaseName", System.Data.SqlDbType.NVarChar, 128).Value = databaseName;
             await create.ExecuteNonQueryAsync();
         }
 
