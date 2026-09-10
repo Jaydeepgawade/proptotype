@@ -103,6 +103,8 @@ public sealed class DashboardViewModel
     public int SetOrders { get; set; }
     public int OpenTrades { get; set; }
     public decimal ActiveRiskAmount { get; set; }
+    public decimal TotalCapital { get; set; }
+    public IReadOnlyList<RiskProfile> Allocations { get; set; } = Array.Empty<RiskProfile>();
 }
 
 public sealed class LoginViewModel

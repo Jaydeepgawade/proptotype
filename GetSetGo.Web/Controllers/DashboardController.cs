@@ -16,6 +16,6 @@ public sealed class DashboardController(IAppRepository repository):Controller
             ? Array.Empty<ResearchSignal>()
             : await repository.GetMatchingSignalsAsync(id);
         var orders=await repository.GetOrdersAsync(id);
-        return View(new DashboardViewModel{RiskProfile=risk,MatchingSignals=signals.Count,SetOrders=orders.Count(x=>x.Status==OrderStatus.Set),OpenTrades=orders.Count(x=>x.Status==OrderStatus.Executed),ActiveRiskAmount=await repository.GetActiveRiskAsync(id)});
+        return View(new DashboardViewModel{RiskProfile=risk,TotalCapital=await repository.GetAccountCapitalAsync(id),Allocations=await repository.GetRiskProfilesAsync(id),MatchingSignals=signals.Count,SetOrders=orders.Count(x=>x.Status==OrderStatus.Set),OpenTrades=orders.Count(x=>x.Status==OrderStatus.Executed),ActiveRiskAmount=await repository.GetActiveRiskAsync(id)});
     }
 }

@@ -8,7 +8,7 @@
 }
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><script src="~/js/theme.js" asp-append-version="true"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - GET·SET·GO</title>
@@ -18,13 +18,13 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/chart.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/records.css" asp-append-version="true" />
-</head>
+<link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" /></head>
 <body>
     <header class="topbar">
-        <a class="brand" asp-controller="Dashboard" asp-action="Index"><span>GET</span>·SET·GO</a>
+        <a class="brand" asp-controller="Dashboard" asp-action="Index"><span>GET</span>&middot;SET&middot;GO</a>
         @if(User.Identity?.IsAuthenticated==true)
         {
-            <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+            <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
             <nav>
                 @if(User.IsInRole("Client"))
                 {
@@ -37,7 +37,7 @@
                 }
                 else { <a asp-controller="ResearchAdmin" asp-action="Index" class="@(activeNav == "ResearchAdmin" ? "active" : null)" aria-current="@(activeNav == "ResearchAdmin" ? "page" : null)">Research desk</a> }
             </nav>
-            <div class="user-menu">@if(User.IsInRole("Client")){<details class="notification-panel"><summary>🔔@if(notifications.Any(x=>!x.IsRead)){<i>@notifications.Count(x=>!x.IsRead)</i>}</summary><div><b>Notifications</b>@if(notifications.Count==0){<p>No notifications yet.</p>}else{foreach(var note in notifications){<p class="@(note.IsRead?"":"unread")">@note.Message</p>}<form asp-controller="Notifications" asp-action="MarkAllRead" method="post"><button class="link-button">Mark all read</button></form>}</div></details><a class="profile-link" asp-controller="Profile" asp-action="Index">@User.Identity.Name</a>}else{<span>@User.Identity.Name</span>}<form asp-controller="Account" asp-action="Logout" method="post"><button class="link-button">Logout</button></form></div>
+            <div class="user-menu"><button type="button" id="themeToggle" class="btn secondary" aria-pressed="false">Dark mode</button><select id="languageSelector" aria-label="Language"><option value="en">English</option><option value="mr">&#2350;&#2352;&#2366;&#2336;&#2368;</option><option value="hi">&#2361;&#2367;&#2306;&#2342;&#2368;</option></select>@if(User.IsInRole("Client")){<details class="notification-panel"><summary>&#128276;@if(notifications.Any(x=>!x.IsRead)){<i>@notifications.Count(x=>!x.IsRead)</i>}</summary><div><b>Notifications</b>@if(notifications.Count==0){<p>No notifications yet.</p>}else{foreach(var note in notifications){<p class="@(note.IsRead?"":"unread")">@note.Message</p>}<form asp-controller="Notifications" asp-action="MarkAllRead" method="post"><button class="link-button">Mark all read</button></form>}</div></details><a class="profile-link" asp-controller="Profile" asp-action="Index">@User.Identity.Name</a>}else{<span>@User.Identity.Name</span>}<form asp-controller="Account" asp-action="Logout" method="post"><button class="link-button">Logout</button></form></div>
         }
     </header>
     <main class="shell">
@@ -47,7 +47,7 @@
     </main>
     <script src="~/lib/jquery/jquery.min.js" asp-append-version="true"></script>
     <script src="~/lib/lightweight-charts/lightweight-charts.standalone.production.js" asp-append-version="true"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script><script src="~/js/translations.js" asp-append-version="true"></script><script src="~/js/language.js" asp-append-version="true"></script>
     <script src="~/js/tutorial-tour.js" asp-append-version="true"></script>
     <script src="~/js/records.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required:false)

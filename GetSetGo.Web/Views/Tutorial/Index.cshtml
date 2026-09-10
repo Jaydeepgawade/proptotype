@@ -4,6 +4,7 @@
     <a class="btn primary" asp-controller="Risk" asp-action="Index" asp-route-tour="1">Start interactive tutorial</a>
 </div>
 <section class="tutorial-intro card"><strong>New here?</strong><span>First set your trading money and risk. After that, GET shows signals that match your setup.</span></section>
+<details class="prototype-reset"><summary>Prototype tools</summary><p>Use this only before recording a fresh demo. It clears your Risk setup, client orders and notifications.</p><form asp-action="ResetDemoData" method="post"><button class="btn text" type="submit" onclick="return confirm('Clear your Risk setup, orders and notifications for a fresh demo?')">Reset my demo data</button></form></details>
 <section class="learning-guide card" aria-label="Learn the basics">
     <div><div class="eyebrow">LEARN THE BASICS</div><h2>Understand the workspace before your first order</h2></div>
     <div class="learning-topics">

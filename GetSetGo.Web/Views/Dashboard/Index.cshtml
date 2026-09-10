@@ -11,3 +11,24 @@
     <div class="metric"><span>Active risk</span><strong>₹@Model.ActiveRiskAmount.ToString("N0")</strong><small>Across set/open orders</small></div>
 </div>
 <div class="flow card"><h2>How your workspace works</h2><div class="flow-grid"><div><em>1</em><b>Risk</b><p>Set your trading style and loss limits once.</p></div><div><em>2</em><b>GET</b><p>Review matched EOD ideas and a short news summary.</p></div><div><em>3</em><b>SET</b><p>Prepare entry, stop, target and quantity automatically.</p></div><div><em>4</em><b>GO</b><p>Execute within validity and track the trade.</p></div></div></div>
+
+<section class="card risk-compare" aria-labelledby="comparisonTitle">
+    <div class="eyebrow">ILLUSTRATIVE COMPARISON</div>
+    <h2 id="comparisonTitle">Before vs after risk setup</h2>
+    <p class="muted">Compare full account exposure with your saved allocation and planned stop-loss risk.</p>
+    <div class="compare-grid">
+        <article><h3>Before: full account exposure</h3><strong>&#8377;@Model.TotalCapital.ToString("N0")</strong><p>Example: committing all account capital to one trade, without an allocation limit.</p></article>
+        <article><h3>After: your saved rules</h3>
+        @if (Model.Allocations.Any(p => p.Capital > 0))
+        {
+            @foreach(var profile in Model.Allocations.Where(p => p.Capital > 0))
+            {
+                <div class="compare-allocation"><b>@(profile.TradingStyle == TradingStyle.ShortTermDelivery ? "Short-term delivery" : profile.TradingStyle.ToString())</b><p>Allocated: &#8377;@profile.Capital.ToString("N0")</p><p>Planned loss per trade: <b>&#8377;@((profile.Capital * profile.RiskPerTradePercent / 100m).ToString("N2"))</b> (@profile.RiskPerTradePercent%)</p></div>
+            }
+        }
+        else { <p>Save a risk setup to see your comparison.</p> }
+        <a class="btn secondary" asp-controller="Risk" asp-action="Index">Edit risk setup</a>
+        </article>
+    </div>
+    <p class="muted">Capital exposure and planned loss are different measures. Stop-loss risk is an estimate, not a guaranteed maximum loss.</p>
+</section>
