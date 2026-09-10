@@ -1,6 +1,7 @@
 @model DashboardViewModel
 @{ViewData["Title"]="Overview";}
-<div class="page-head"><div><div class="eyebrow">CLIENT WORKSPACE</div><h1>Good evening, @User.Identity?.Name</h1><p>Your risk-aware EOD research at a glance.</p></div><a class="btn primary" asp-controller="Signals" asp-action="Index">View GET signals →</a></div>
+@{ var indiaTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "India Standard Time"); var greeting = indiaTime.Hour < 12 ? "Good morning" : indiaTime.Hour < 17 ? "Good afternoon" : "Good evening"; }
+<div class="page-head"><div><div class="eyebrow">CLIENT WORKSPACE</div><h1>@greeting</h1><p>Your risk-aware EOD research at a glance.</p></div><a class="btn primary" asp-controller="Signals" asp-action="Index">View GET signals →</a></div>
 @if(Model.RiskProfile is null)
 {<div class="callout"><div><b>Start with your risk setup</b><p>Tell us your capital, style and acceptable downside before viewing signals.</p></div><a class="btn dark" asp-controller="Risk" asp-action="Index">Configure risk</a></div>}
 <div class="metrics">

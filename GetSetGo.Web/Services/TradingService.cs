@@ -25,10 +25,7 @@ public sealed class TradingService(IAppRepository repository) : ITradingService
         var perShareRisk=Math.Abs(signal.EntryPrice-signal.StopLoss);
         if(perShareRisk<=0) return(false,"Signal has an invalid stop-loss.",null);
         var allowedRisk=risk.Capital*risk.RiskPerTradePercent/100m;
-        var quantity=(int)Math.Floor(allowedRisk/perShareRisk);
-        if(quantity<1) return(false,"Your capital/risk limit is too low for one share.",null);
-        var actualRisk=quantity*perShareRisk;
-        var orderValue=quantity*signal.EntryPrice;
+        var riskBasedQuantity=(int)Math.Floor(allowedRisk/perShareRisk);
         var activeOrders=await repository.GetOrdersAsync(userId);
         var reservedCapital=activeOrders
             .Where(order => order.Status is OrderStatus.Set or OrderStatus.Executed)
@@ -37,12 +34,13 @@ public sealed class TradingService(IAppRepository repository) : ITradingService
             .Where(order => (order.Status is OrderStatus.Set or OrderStatus.Executed) && order.TradingStyle == signal.TradingStyle)
             .Sum(order => order.EntryPrice*order.Quantity);
         var availableStyleCapital=risk.Capital-styleReservedCapital;
-        if(orderValue>availableStyleCapital)
-            return(false,$"Insufficient {signal.TradingStyle} capital. This order requires ₹{orderValue:N2}; ₹{Math.Max(0, availableStyleCapital):N2} is available.",null);
         var accountCapital=await repository.GetAccountCapitalAsync(userId);
         var availableCapital=accountCapital-reservedCapital;
-        if(orderValue>availableCapital)
-            return(false,$"Insufficient combined account capital. This order requires ₹{orderValue:N2}; ₹{Math.Max(0, availableCapital):N2} is available.",null);
+        var styleCapitalQuantity=(int)Math.Floor(Math.Max(0, availableStyleCapital)/signal.EntryPrice);
+        var accountCapitalQuantity=(int)Math.Floor(Math.Max(0, availableCapital)/signal.EntryPrice);
+        var quantity=Math.Min(riskBasedQuantity, Math.Min(styleCapitalQuantity, accountCapitalQuantity));
+        if(quantity<1) return(false,"There is not enough available capital for one share.",null);
+        var actualRisk=quantity*perShareRisk;
         var activeRisk=activeOrders.Where(order => (order.Status is OrderStatus.Set or OrderStatus.Executed) && order.TradingStyle == signal.TradingStyle).Sum(order => order.RiskAmount);
         var maxRisk=risk.Capital*risk.MaxTotalRiskPercent/100m;
         if(activeRisk+actualRisk>maxRisk) return(false,$"Maximum active-risk limit reached (₹{maxRisk:N2}).",null);

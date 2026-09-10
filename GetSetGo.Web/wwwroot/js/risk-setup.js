@@ -3,6 +3,16 @@
   const account = form.querySelector('[data-account-capital]'), allocated = form.querySelector('[data-allocated]'), remaining = form.querySelector('[data-remaining]'), state = form.querySelector('[data-allocation-state]'), submit = form.querySelector('[data-save-risk]'), formError = form.querySelector('[data-form-error]');
   const money = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Math.max(0, value));
   const number = input => Number(input.value) || 0;
+  const pickers = form.querySelectorAll('[data-style-picker]');
+  function showStyle(index) {
+    form.querySelectorAll('[data-style-editor]').forEach(panel => panel.hidden = panel.dataset.styleEditor !== String(index));
+    pickers.forEach(picker => picker.value = index);
+  }
+  pickers.forEach(picker => picker.addEventListener('change', () => showStyle(picker.value)));
+  document.querySelectorAll('[data-update-style]').forEach(button => button.addEventListener('click', () => {
+    showStyle(button.dataset.updateStyle);
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
   function update() {
     const total = number(account); let sum = 0, valid = total >= 1000;
     form.querySelectorAll('[data-style-card]').forEach(card => {

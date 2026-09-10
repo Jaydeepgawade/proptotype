@@ -2,6 +2,10 @@
   const form = document.querySelector('[data-signal-form]'); if (!form) return;
   const input = name => form.querySelector('[data-preview="' + name + '"]');
   const money = value => '₹' + (Number(value) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  ['entry', 'stop', 'target'].forEach(name => {
+    const field = input(name);
+    if (field && Number(field.value) === 0) field.value = '';
+  });
   function update() {
     const symbol = input('symbol').value.trim().toUpperCase() || 'RELIANCE';
     const side = input('side').selectedOptions[0].text.toUpperCase();

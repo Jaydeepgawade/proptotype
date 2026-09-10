@@ -1,24 +1,29 @@
 @model RiskSetupViewModel
 @{ ViewData["Title"] = "Risk setup"; }
-<div class="page-head"><div><div class="eyebrow">STEP 1</div><h1>Risk setup</h1><p>Allocate one trading account across styles. Every SET order checks its style budget and the combined account limit.</p></div></div>
-<form method="post" class="risk-setup" data-risk-setup>
+<div class="page-head"><div><div class="eyebrow">STEP 1 OF 3</div><h1>Set your trading money</h1><p>Select one trading type, enter its limits, and save. You can update it any time.</p></div></div>
+<form method="post" class="risk-setup dropdown-risk-setup" data-risk-setup>
     <div asp-validation-summary="ModelOnly" class="validation"></div>
-    <section class="account-card card"><div><span class="eyebrow">COMBINED ACCOUNT LIMIT</span><h2>How much capital can all styles use?</h2><p>This is the maximum total value reserved by active SET and executed orders.</p></div><div class="account-input"><label asp-for="TotalCapital">Account capital (&#8377;)</label><input asp-for="TotalCapital" type="number" min="1000" step="1000" data-account-capital /></div></section>
-    <section class="allocation-bar card"><div><span>Allocated</span><strong data-allocated>₹0</strong></div><div><span>Available to allocate</span><strong data-remaining>₹0</strong></div><div class="allocation-state" data-allocation-state aria-live="polite"></div></section>
-    <section class="risk-profile-grid">
+    <section class="simple-total card"><div><span class="simple-step">1</span><h2>Total money in your account</h2><p>This is the maximum money for all trades together.</p></div><div class="account-input"><label asp-for="TotalCapital">Total trading money (₹)</label><input asp-for="TotalCapital" type="number" min="1000" step="1000" data-account-capital /></div></section>
     @for (var i = 0; i < Model.Profiles.Count; i++)
     {
-        <article class="risk-style-card card" data-style-card>
-            <header><div><span class="style-index">0@(i + 1)</span><h2>@Model.Profiles[i].TradingStyle</h2></div><span class="style-state" data-style-state>Disabled</span></header>
+        var description = Model.Profiles[i].TradingStyle switch { TradingStyle.Intraday => "Buy and sell on the same day.", TradingStyle.Swing => "Hold for a few days.", TradingStyle.Positional => "Hold for a few weeks.", _ => "Hold for a longer period." };
+        <section class="card style-editor" data-style-editor="@i" data-style-card @(i == 0 ? "" : "hidden")>
             <input asp-for="Profiles[i].TradingStyle" type="hidden" />
-            <label asp-for="Profiles[i].Capital">Capital allocation (&#8377;)</label><input asp-for="Profiles[i].Capital" type="number" min="0" step="1000" data-style-capital /><small>Set 0 to keep this style disabled.</small>
-            <div class="style-budget"><span>Maximum loss per trade</span><strong data-style-risk>₹0</strong><small>Allocation × risk per trade</small></div>
-            <div class="field-grid"><div><label asp-for="Profiles[i].RiskPerTradePercent">Risk per trade (%)</label><input asp-for="Profiles[i].RiskPerTradePercent" type="number" min="0.1" max="5" step="0.1" data-risk-per-trade /></div><div><label asp-for="Profiles[i].MaxTotalRiskPercent">Maximum style risk (%)</label><input asp-for="Profiles[i].MaxTotalRiskPercent" type="number" min="0.1" max="5" step="0.1" data-max-risk /></div></div>
-            <label asp-for="Profiles[i].MinimumRewardRiskRatio">Minimum reward-to-risk ratio</label><select asp-for="Profiles[i].MinimumRewardRiskRatio"><option value="1">1 : 1</option><option value="2">2 : 1</option><option value="3">3 : 1</option><option value="4">4 : 1</option><option value="5">5 : 1</option></select>
-            <p class="style-error" data-style-error aria-live="polite"></p>
-        </article>
+            <div class="style-editor-head"><div><span class="eyebrow">2. TRADING TYPE</span><label class="inline-style-label" for="stylePicker-@i">Choose trading type</label><select id="stylePicker-@i" data-style-picker>@for (var styleIndex = 0; styleIndex < Model.Profiles.Count; styleIndex++){<option value="@styleIndex" selected="@(styleIndex == i)">@Model.Profiles[styleIndex].TradingStyle</option>}</select><p>@description</p></div><span class="style-state" data-style-state>Not using</span></div>
+            <label asp-for="Profiles[i].Capital">Money for this style (₹)</label><input asp-for="Profiles[i].Capital" type="number" min="0" step="1000" data-style-capital /><small>Enter 0 when you do not want to use this style.</small>
+            <div class="simple-advanced"><div class="field-grid"><div><label asp-for="Profiles[i].RiskPerTradePercent">Loss allowed in one trade (%)</label><input asp-for="Profiles[i].RiskPerTradePercent" type="number" min="0.1" max="5" step="0.1" data-risk-per-trade /></div><div><label asp-for="Profiles[i].MaxTotalRiskPercent">Maximum loss at one time (%)</label><input asp-for="Profiles[i].MaxTotalRiskPercent" type="number" min="0.1" max="5" step="0.1" data-max-risk /></div></div><label asp-for="Profiles[i].MinimumRewardRiskRatio">Minimum profit compared to risk</label><select asp-for="Profiles[i].MinimumRewardRiskRatio"><option value="1">1 : 1</option><option value="2">2 : 1</option><option value="3">3 : 1</option><option value="4">4 : 1</option><option value="5">5 : 1</option></select><p class="style-budget">Maximum loss in one trade: <strong data-style-risk>₹0</strong></p></div><p class="style-error" data-style-error aria-live="polite"></p>
+        </section>
     }
-    </section>
-    <div class="risk-save"><p data-form-error aria-live="polite"></p><button class="btn primary" type="submit" data-save-risk>Save capital allocations</button></div>
+    <section class="allocation-bar card"><div><span>Money allocated</span><strong data-allocated>₹0</strong></div><div><span>Money left</span><strong data-remaining>₹0</strong></div><div class="allocation-state" data-allocation-state aria-live="polite"></div></section>
+    <div class="risk-save"><p data-form-error aria-live="polite"></p><button class="btn primary" type="submit" data-save-risk>Save and update setup</button></div>
 </form>
+<section class="saved-style-section"><div class="page-head"><div><div class="eyebrow">SAVED SETUPS</div><h2>Your trading types</h2><p>Use Update to change a saved setup.</p></div></div><div class="saved-style-grid">
+@for (var i = 0; i < Model.Profiles.Count; i++)
+{
+    if (Model.Profiles[i].Capital > 0)
+    {
+        <article class="saved-style-card card"><span class="style-badge style-@Model.Profiles[i].TradingStyle.ToString().ToLowerInvariant()">@Model.Profiles[i].TradingStyle</span><strong>₹@Model.Profiles[i].Capital.ToString("N0")</strong><small>@Model.Profiles[i].RiskPerTradePercent% risk per trade · @Model.Profiles[i].MinimumRewardRiskRatio : 1 R:R</small><button type="button" class="btn secondary" data-update-style="@i">Update</button></article>
+    }
+}
+</div></section>
 @section Scripts { <script src="~/js/risk-setup.js" asp-append-version="true"></script> }

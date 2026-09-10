@@ -1,7 +1,7 @@
 @model IReadOnlyList<ResearchSignal>
 @using System.Globalization
 @{ViewData["Title"]="Research desk";}
-<div class="page-head"><div><h1>AI research desk</h1><p>Create and publish AI research signals for clients.</p></div><a class="btn primary" asp-action="Create">+ Generate research signal</a></div>
+<div class="page-head"><div><h1>Research desk</h1></div><a class="btn primary" asp-action="Create">+ Generate research signal</a></div>
 <section class="record-list card" data-record-list aria-label="Research signals"><div class="record-scroll" tabindex="0" role="region" aria-label="Research signals table">
 <table class="record-table"><thead><tr><th>Stock</th><th data-filter="Style">Style</th><th data-filter="Side">Side</th><th class="numeric" data-type="number">Entry</th><th class="numeric" data-type="number">Stop-loss</th><th class="numeric" data-type="number">Target</th><th class="numeric" data-type="number">R:R</th><th data-type="date">Valid until (UTC)</th><th data-filter="Status">Status</th></tr></thead><tbody>
 @foreach(var s in Model)
