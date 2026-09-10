@@ -47,9 +47,6 @@ public sealed class DatabaseInitializer(IConfiguration configuration, IPasswordS
         await SeedUserAsync(connection, "Demo Client", "client@getsetgo.local", "Client@123", "Client");
         await SeedUserAsync(connection, "Research Admin", "admin@getsetgo.local", "Admin@123", "Admin");
 
-        await using var seedSignals = connection.CreateCommand();
-        seedSignals.CommandText = SignalSeedSql;
-        await seedSignals.ExecuteNonQueryAsync();
         await SeedMarketCandlesAsync(connection);
     }
 
@@ -186,15 +183,4 @@ public sealed class DatabaseInitializer(IConfiguration configuration, IPasswordS
             CREATE INDEX IX_MarketCandles_SymbolTime ON MarketCandles(Symbol,CandleTimeUtc DESC);
         """;
 
-    private const string SignalSeedSql = """
-        IF NOT EXISTS (SELECT 1 FROM ResearchSignals)
-        BEGIN
-            INSERT INTO ResearchSignals(Symbol,Side,TradingStyle,EntryPrice,StopLoss,TargetPrice,AiNewsSummary,ValidFromUtc,ValidUntilUtc)
-            VALUES
-            ('RELIANCE',1,1,2950,2925,3025,'Large-cap energy and retail company. Review the latest company announcements before execution.',SYSUTCDATETIME(),DATEADD(day,2,SYSUTCDATETIME())),
-            ('TCS',1,2,4180,4100,4380,'IT services leader. The signal follows an EOD momentum setup with controlled downside.',SYSUTCDATETIME(),DATEADD(day,5,SYSUTCDATETIME())),
-            ('HDFCBANK',1,3,1720,1650,1930,'Private-sector bank. This positional setup uses a wider stop and a three-to-one reward-risk profile.',SYSUTCDATETIME(),DATEADD(day,10,SYSUTCDATETIME())),
-            ('M&M',2,1,3100,3130,3010,'Automobile stock with an EOD sell setup. Confirm the market trend before setting the order.',SYSUTCDATETIME(),DATEADD(day,2,SYSUTCDATETIME()));
-        END
-        """;
 }

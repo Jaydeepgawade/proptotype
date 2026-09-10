@@ -3,7 +3,7 @@
 <section class="login-wrap">
     <div class="login-copy"><div class="eyebrow">EOD SMART RESEARCH</div><h1>Confident trades.<br/><span>Controlled risk.</span></h1><p>Personalised research signals, one-click bracket orders and a clear trade tracker.</p><div class="steps"><b>GET</b><i></i><b>SET</b><i></i><b>GO</b></div></div>
     <div class="card login-card">
-        <h2>Welcome back</h2><p class="muted">Sign in to your trading workspace</p>
+        <h2>Welcome back</h2><p class="muted">Choose your workspace to continue</p>
         <form method="post">
             <input asp-for="ReturnUrl" type="hidden" />
             <div asp-validation-summary="ModelOnly" class="validation"></div>
@@ -11,8 +11,27 @@
             <span asp-validation-for="Email" class="validation"></span>
             <label asp-for="Password"></label><input asp-for="Password" placeholder="••••••••" />
             <span asp-validation-for="Password" class="validation"></span>
-            <button class="btn primary full" type="submit">Sign in</button>
+            <div class="login-actions">
+                <button class="btn primary" type="button" data-demo-login="user">Login as user</button>
+                <button class="btn dark" type="button" data-demo-login="admin">Login as admin</button>
+            </div>
         </form>
-        <div class="demo"><strong>Demo client</strong><code>client@getsetgo.local / Client@123</code><strong>Research admin</strong><code>admin@getsetgo.local / Admin@123</code></div>
+        @* <div class="demo"><strong>Demo client</strong><code>client@getsetgo.local / Client@123</code><strong>Research admin</strong><code>admin@getsetgo.local / Admin@123</code></div> *@
     </div>
 </section>
+@section Scripts {
+<script>
+(() => {
+    const form = document.querySelector('.login-card form');
+    const email = document.querySelector('#Email');
+    const password = document.querySelector('#Password');
+    if (!form || !email || !password) return;
+    document.querySelectorAll('[data-demo-login]').forEach(button => button.addEventListener('click', () => {
+        const admin = button.dataset.demoLogin === 'admin';
+        email.value = admin ? 'admin@getsetgo.local' : 'client@getsetgo.local';
+        password.value = admin ? 'Admin@123' : 'Client@123';
+        form.requestSubmit();
+    }));
+})();
+</script>
+}

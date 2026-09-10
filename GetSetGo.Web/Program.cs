@@ -108,11 +108,6 @@ app.UseAuthorization();
 using (var scope = app.Services.CreateScope())
 {
     await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
-    if (app.Environment.IsDevelopment() && app.Configuration.GetValue<bool>("DemoData:SeedBulk"))
-        await BulkDemoSeeder.SeedAsync(
-            scope.ServiceProvider.GetRequiredService<ISqlConnectionFactory>(),
-            scope.ServiceProvider.GetRequiredService<IPasswordService>());
-
 }
 
 app.MapControllerRoute(
