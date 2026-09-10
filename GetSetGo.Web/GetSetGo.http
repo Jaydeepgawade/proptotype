@@ -1,0 +1,50 @@
+@host = https://localhost:7001
+
+### Login as demo client (retain the Set-Cookie value in your HTTP client)
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@getsetgo.local",
+  "password": "Client@123"
+}
+
+### Get anti-forgery token (retain its Set-Cookie value too)
+GET {{host}}/api/v1/security/antiforgery
+
+### Read risk profile
+GET {{host}}/api/v1/risk-profile
+
+### Save risk profile (paste requestToken returned above)
+PUT {{host}}/api/v1/risk-profile
+Content-Type: application/json
+X-CSRF-TOKEN: PASTE_REQUEST_TOKEN_HERE
+
+{
+  "capital": 100000,
+  "tradingStyle": "Intraday",
+  "riskPerTradePercent": 1,
+  "maxTotalRiskPercent": 3,
+  "minimumRewardRiskRatio": 2
+}
+
+### GET matching signals
+GET {{host}}/api/v1/signals
+
+### Get 60 daily demo OHLC candles
+GET {{host}}/api/v1/market-data/RELIANCE?timeframe=1D&take=60
+
+### SET signal 1
+POST {{host}}/api/v1/signals/1/set
+X-CSRF-TOKEN: PASTE_REQUEST_TOKEN_HERE
+
+### Tracker
+GET {{host}}/api/v1/orders
+
+### GO order 1
+POST {{host}}/api/v1/orders/1/go
+X-CSRF-TOKEN: PASTE_REQUEST_TOKEN_HERE
+
+### Cancel order 1
+POST {{host}}/api/v1/orders/1/cancel
+X-CSRF-TOKEN: PASTE_REQUEST_TOKEN_HERE

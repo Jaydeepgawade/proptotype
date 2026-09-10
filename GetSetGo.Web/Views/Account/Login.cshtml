@@ -1,0 +1,18 @@
+@model LoginViewModel
+@{ViewData["Title"]="Sign in";}
+<section class="login-wrap">
+    <div class="login-copy"><div class="eyebrow">EOD SMART RESEARCH</div><h1>Confident trades.<br/><span>Controlled risk.</span></h1><p>Personalised research signals, one-click bracket orders and a clear trade tracker.</p><div class="steps"><b>GET</b><i></i><b>SET</b><i></i><b>GO</b></div></div>
+    <div class="card login-card">
+        <h2>Welcome back</h2><p class="muted">Sign in to your trading workspace</p>
+        <form method="post">
+            <input asp-for="ReturnUrl" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="validation"></div>
+            <label asp-for="Email"></label><input asp-for="Email" placeholder="you@example.com" />
+            <span asp-validation-for="Email" class="validation"></span>
+            <label asp-for="Password"></label><input asp-for="Password" placeholder="••••••••" />
+            <span asp-validation-for="Password" class="validation"></span>
+            <button class="btn primary full" type="submit">Sign in</button>
+        </form>
+        <div class="demo"><strong>Demo client</strong><code>client@getsetgo.local / Client@123</code><strong>Research admin</strong><code>admin@getsetgo.local / Admin@123</code></div>
+    </div>
+</section>

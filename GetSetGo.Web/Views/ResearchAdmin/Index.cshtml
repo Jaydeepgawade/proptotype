@@ -1,0 +1,4 @@
+@model IReadOnlyList<ResearchSignal>
+@{ViewData["Title"]="Research desk";}
+<div class="page-head"><div><div class="eyebrow">RESEARCH ADMIN</div><h1>EOD signal desk</h1><p>Publish high-conviction research for automatic client matching.</p></div><a class="btn primary" asp-action="Create">+ New signal</a></div>
+<div class="table-wrap card"><table><thead><tr><th>Symbol</th><th>Side/style</th><th>Entry / stop / target</th><th>R:R</th><th>Valid until</th><th>State</th></tr></thead><tbody>@foreach(var s in Model){<tr><td><b>@s.Symbol</b></td><td>@s.Side<small>@s.TradingStyle</small></td><td>₹@s.EntryPrice / ₹@s.StopLoss / ₹@s.TargetPrice</td><td>@s.RewardRiskRatio : 1</td><td>@s.ValidUntilUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</td><td><span class="status @(s.IsActive?"executed":"cancelled")">@(s.IsActive?"Active":"Inactive")</span></td></tr>}</tbody></table></div>

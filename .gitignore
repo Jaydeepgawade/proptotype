@@ -1,0 +1,33 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test results
+TestResults/
+*.trx
+
+# Logs
+logs/
+*.log
+
+# Environment and secrets
+.env
+appsettings.Development.json
+appsettings.Production.json
+
+# Publish output
+publish/
+PublishProfiles/
+*.pubxml
+*.pubxml.user
+
+# NuGet
+packages/
+*.nupkg

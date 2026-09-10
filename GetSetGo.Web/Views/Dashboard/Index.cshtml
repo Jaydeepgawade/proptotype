@@ -1,0 +1,12 @@
+@model DashboardViewModel
+@{ViewData["Title"]="Overview";}
+<div class="page-head"><div><div class="eyebrow">CLIENT WORKSPACE</div><h1>Good evening, @User.Identity?.Name</h1><p>Your risk-aware EOD research at a glance.</p></div><a class="btn primary" asp-controller="Signals" asp-action="Index">View GET signals →</a></div>
+@if(Model.RiskProfile is null)
+{<div class="callout"><div><b>Start with your risk setup</b><p>Tell us your capital, style and acceptable downside before viewing signals.</p></div><a class="btn dark" asp-controller="Risk" asp-action="Index">Configure risk</a></div>}
+<div class="metrics">
+    <div class="metric"><span>Matching signals</span><strong>@Model.MatchingSignals</strong><small>Personalised for you</small></div>
+    <div class="metric"><span>SET orders</span><strong>@Model.SetOrders</strong><small>Awaiting GO</small></div>
+    <div class="metric"><span>Open trades</span><strong>@Model.OpenTrades</strong><small>In tracker</small></div>
+    <div class="metric"><span>Active risk</span><strong>₹@Model.ActiveRiskAmount.ToString("N0")</strong><small>Across set/open orders</small></div>
+</div>
+<div class="flow card"><h2>How your workspace works</h2><div class="flow-grid"><div><em>1</em><b>Risk</b><p>Set your trading style and loss limits once.</p></div><div><em>2</em><b>GET</b><p>Review matched EOD ideas and a short news summary.</p></div><div><em>3</em><b>SET</b><p>Prepare entry, stop, target and quantity automatically.</p></div><div><em>4</em><b>GO</b><p>Execute within validity and track the trade.</p></div></div></div>
