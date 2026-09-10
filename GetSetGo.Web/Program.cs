@@ -64,26 +64,31 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("v1/swagger.json", "GetSetGo API v1");
         options.DocumentTitle = "GetSetGo API - Swagger";
         options.UseRequestInterceptor("""
-            async (request) => {
+            function (request) {
                 const url = new URL(request.url, window.location.href);
                 if (url.origin !== window.location.origin) return request;
-                request.credentials = "same-origin";
-                const method = (request.method || "GET").toUpperCase();
-                if (["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
-                    !url.pathname.endsWith("/auth/login")) {
-                    const apiRoot = url.pathname.indexOf("/api/v1/");
+                request.credentials = 'same-origin';
+                const method = (request.method || 'GET').toUpperCase();
+                if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
+                    !url.pathname.endsWith('/auth/login')) {
+                    const apiRoot = url.pathname.indexOf('/api/v1/');
                     if (apiRoot < 0) return request;
-                    const response = await fetch(
-                        url.pathname.slice(0, apiRoot) + "/api/v1/security/antiforgery",
-                        { credentials: "same-origin", cache: "no-store" });
-                    if (!response.ok) throw new Error("Unable to retrieve the CSRF token. Log in and try again.");
-                    const tokens = await response.json();
-                    request.headers = request.headers || {};
-                    request.headers[tokens.headerName] = tokens.requestToken;
+                    return fetch(
+                        url.pathname.slice(0, apiRoot) + '/api/v1/security/antiforgery',
+                        { credentials: 'same-origin', cache: 'no-store' })
+                        .then(function (response) {
+                            if (!response.ok) throw new Error('Unable to retrieve the CSRF token. Log in and try again.');
+                            return response.json();
+                        })
+                        .then(function (tokens) {
+                            request.headers = request.headers || {};
+                            request.headers[tokens.headerName] = tokens.requestToken;
+                            return request;
+                        });
                 }
                 return request;
             }
-            """);
+            """.ReplaceLineEndings(" ")); // Embedded JS requires one line, single-quoted strings and a regular function.
     });
     DevelopmentBrowserLauncher.Register(app);
 }
