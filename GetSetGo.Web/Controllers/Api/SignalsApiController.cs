@@ -17,6 +17,13 @@ public sealed class SignalsApiController(IAppRepository repository,ITradingServi
         return Ok(await repository.GetMatchingSignalsAsync(User.UserId()));
     }
 
+    [HttpGet("{id:int}/preview")]
+    public async Task<IActionResult> Preview(int id)
+    {
+        var preview = await trading.PreviewSetOrderAsync(User.UserId(), id);
+        return preview.Ok ? Ok(preview) : BadRequest(new { message = preview.Message });
+    }
+
     [HttpPost("{id:int}/set"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Set(int id)
     {

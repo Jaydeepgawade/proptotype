@@ -16,6 +16,9 @@ public interface IAppRepository
     Task<IReadOnlyList<ResearchSignal>> GetAllSignalsAsync();
     Task<ResearchSignal?> GetSignalAsync(int id);
     Task AddSignalAsync(ResearchSignal signal);
+    Task<bool> UpdateSignalAsync(ResearchSignal signal);
+    Task<bool> DeactivateSignalAsync(int id);
+    Task<bool> ExpireSignalAsync(int id);
     Task<int> AddOrderAsync(TradeOrder order);
     Task<bool> HasActiveOrderAsync(int userId, int signalId);
     Task<TradeOrder?> GetOrderAsync(int id, int userId);
@@ -23,6 +26,9 @@ public interface IAppRepository
     Task UpdateOrderStatusAsync(int id, int userId, OrderStatus status);
     Task<decimal> GetActiveRiskAsync(int userId);
     Task<IReadOnlyList<MarketCandle>> GetMarketCandlesAsync(string symbol, int take);
+    Task AddNotificationAsync(int userId, string eventKey, string message);
+    Task<IReadOnlyList<AppNotification>> GetNotificationsAsync(int userId);
+    Task MarkAllNotificationsReadAsync(int userId);
 }
 
 public sealed class AppRepository(ISqlConnectionFactory factory) : IAppRepository
@@ -148,6 +154,26 @@ public sealed class AppRepository(ISqlConnectionFactory factory) : IAppRepositor
         await DatabaseInitializer.SeedMarketCandlesAsync(c);
     }
 
+    public async Task<bool> UpdateSignalAsync(ResearchSignal s)
+    {
+        await using var c=factory.Create(); await c.OpenAsync(); await using var cmd=c.CreateCommand();
+        cmd.CommandText="UPDATE ResearchSignals SET Symbol=@Symbol,Side=@Side,TradingStyle=@Style,EntryPrice=@Entry,StopLoss=@Stop,TargetPrice=@Target,AiNewsSummary=@News,ValidFromUtc=@From,ValidUntilUtc=@Until WHERE Id=@Id";
+        Add(cmd,"@Id",s.Id); Add(cmd,"@Symbol",s.Symbol.Trim().ToUpperInvariant()); Add(cmd,"@Side",(int)s.Side); Add(cmd,"@Style",(int)s.TradingStyle); Add(cmd,"@Entry",s.EntryPrice); Add(cmd,"@Stop",s.StopLoss); Add(cmd,"@Target",s.TargetPrice); Add(cmd,"@News",s.AiNewsSummary); Add(cmd,"@From",s.ValidFromUtc); Add(cmd,"@Until",s.ValidUntilUtc);
+        return await cmd.ExecuteNonQueryAsync()==1;
+    }
+
+    public async Task<bool> DeactivateSignalAsync(int id)
+    {
+        await using var c=factory.Create(); await c.OpenAsync(); await using var cmd=c.CreateCommand();
+        cmd.CommandText="UPDATE ResearchSignals SET IsActive=0 WHERE Id=@Id AND IsActive=1"; Add(cmd,"@Id",id); return await cmd.ExecuteNonQueryAsync()==1;
+    }
+
+    public async Task<bool> ExpireSignalAsync(int id)
+    {
+        await using var c=factory.Create(); await c.OpenAsync(); await using var cmd=c.CreateCommand();
+        cmd.CommandText="UPDATE ResearchSignals SET ValidUntilUtc=SYSUTCDATETIME() WHERE Id=@Id AND IsActive=1 AND ValidUntilUtc>SYSUTCDATETIME()"; Add(cmd,"@Id",id); return await cmd.ExecuteNonQueryAsync()==1;
+    }
+
     public async Task<int> AddOrderAsync(TradeOrder o)
     {
         await using var c=factory.Create(); await c.OpenAsync(); await using var cmd=c.CreateCommand();
@@ -195,6 +221,9 @@ public sealed class AppRepository(ISqlConnectionFactory factory) : IAppRepositor
         list.Reverse(); return list;
     }
 
+    public async Task AddNotificationAsync(int userId,string eventKey,string message){await using var c=factory.Create();await c.OpenAsync();await using var cmd=c.CreateCommand();cmd.CommandText="IF NOT EXISTS(SELECT 1 FROM AppNotifications WHERE UserId=@User AND EventKey=@Key) INSERT AppNotifications(UserId,EventKey,Message) VALUES(@User,@Key,@Message)";Add(cmd,"@User",userId);Add(cmd,"@Key",eventKey);Add(cmd,"@Message",message);await cmd.ExecuteNonQueryAsync();}
+    public async Task<IReadOnlyList<AppNotification>> GetNotificationsAsync(int userId){var list=new List<AppNotification>();await using var c=factory.Create();await c.OpenAsync();await using var cmd=c.CreateCommand();cmd.CommandText="SELECT TOP 10 Id,Message,IsRead,CreatedUtc FROM AppNotifications WHERE UserId=@User ORDER BY Id DESC";Add(cmd,"@User",userId);await using var r=await cmd.ExecuteReaderAsync();while(await r.ReadAsync())list.Add(new AppNotification{Id=r.GetInt32(0),Message=r.GetString(1),IsRead=r.GetBoolean(2),CreatedUtc=r.GetDateTime(3)});return list;}
+    public async Task MarkAllNotificationsReadAsync(int userId){await using var c=factory.Create();await c.OpenAsync();await using var cmd=c.CreateCommand();cmd.CommandText="UPDATE AppNotifications SET IsRead=1 WHERE UserId=@User AND IsRead=0";Add(cmd,"@User",userId);await cmd.ExecuteNonQueryAsync();}
     private static RiskProfile ReadRisk(SqlDataReader r)=>new(){Id=r.GetInt32(0),UserId=r.GetInt32(1),Capital=r.GetDecimal(2),TradingStyle=(TradingStyle)r.GetInt32(3),RiskPerTradePercent=r.GetDecimal(4),MaxTotalRiskPercent=r.GetDecimal(5),MinimumRewardRiskRatio=r.GetDecimal(6),IsActive=r.GetBoolean(7)};
     private static ResearchSignal ReadSignal(SqlDataReader r)=>new(){Id=r.GetInt32(0),Symbol=r.GetString(1),Side=(SignalSide)r.GetInt32(2),TradingStyle=(TradingStyle)r.GetInt32(3),EntryPrice=r.GetDecimal(4),StopLoss=r.GetDecimal(5),TargetPrice=r.GetDecimal(6),AiNewsSummary=r.GetString(7),ValidFromUtc=r.GetDateTime(8),ValidUntilUtc=r.GetDateTime(9),IsActive=r.GetBoolean(10)};
     private static TradeOrder ReadOrder(SqlDataReader r)=>new(){Id=r.GetInt32(0),UserId=r.GetInt32(1),SignalId=r.GetInt32(2),Symbol=r.GetString(3),Side=(SignalSide)r.GetInt32(4),EntryPrice=r.GetDecimal(5),StopLoss=r.GetDecimal(6),TargetPrice=r.GetDecimal(7),Quantity=r.GetInt32(8),RiskAmount=r.GetDecimal(9),ValidUntilUtc=r.GetDateTime(10),Status=(OrderStatus)r.GetInt32(11),CreatedUtc=r.GetDateTime(12),ExecutedUtc=r.IsDBNull(13)?null:r.GetDateTime(13),TradingStyle=r.IsDBNull(14)?null:(TradingStyle)r.GetInt32(14)};

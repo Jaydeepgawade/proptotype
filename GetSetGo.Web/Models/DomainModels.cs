@@ -23,7 +23,7 @@ public sealed class RiskProfile : IValidatableObject
     [Required] public TradingStyle TradingStyle { get; set; }
     [Range(0.1, 5)] public decimal RiskPerTradePercent { get; set; } = 1;
     [Range(0.1, 5)] public decimal MaxTotalRiskPercent { get; set; } = 3;
-    [Range(1, 5)] public decimal MinimumRewardRiskRatio { get; set; } = 1;
+    [Range(0.1, 5)] public decimal MinimumRewardRiskRatio { get; set; } = 1;
     public bool IsActive { get; set; } = true;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -86,6 +86,14 @@ public sealed class MarketCandle
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public long Volume { get; set; }
+}
+
+public sealed class AppNotification
+{
+    public int Id { get; set; }
+    public string Message { get; set; } = "";
+    public bool IsRead { get; set; }
+    public DateTime CreatedUtc { get; set; }
 }
 
 public sealed class DashboardViewModel

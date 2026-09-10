@@ -36,7 +36,8 @@ public sealed class OrdersController(IAppRepository repository, ITradingService 
         var order = orders.FirstOrDefault(o => o.Id == id);
         if (order is null) return NotFound();
         ViewData["ActiveNav"] = section == "History" ? "History" : section == "Tracker" ? "Tracker" : order.Status == OrderStatus.Set ? "Set" : order.Status == OrderStatus.Executed ? "Go" : "Tracker";
-        return View(new OrderDetailsViewModel(order, await repository.GetSignalAsync(order.SignalId)));
+        var candle = (await repository.GetMarketCandlesAsync(order.Symbol, 1)).LastOrDefault();
+        return View(new OrderDetailsViewModel(order, await repository.GetSignalAsync(order.SignalId), candle?.Close));
     }
 
     [HttpPost, ActionName("Go"), ValidateAntiForgeryToken]

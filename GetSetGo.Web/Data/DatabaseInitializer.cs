@@ -181,6 +181,13 @@ public sealed class DatabaseInitializer(IConfiguration configuration, IPasswordS
             CONSTRAINT UQ_MarketCandles_SymbolTime UNIQUE(Symbol,CandleTimeUtc));
         IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_MarketCandles_SymbolTime')
             CREATE INDEX IX_MarketCandles_SymbolTime ON MarketCandles(Symbol,CandleTimeUtc DESC);
+        IF OBJECT_ID('AppNotifications') IS NULL
+        CREATE TABLE AppNotifications (
+            Id INT IDENTITY PRIMARY KEY, UserId INT NOT NULL, EventKey NVARCHAR(120) NOT NULL,
+            Message NVARCHAR(300) NOT NULL, IsRead BIT NOT NULL DEFAULT 0,
+            CreatedUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            CONSTRAINT UQ_AppNotifications_UserEvent UNIQUE(UserId,EventKey),
+            CONSTRAINT FK_AppNotifications_Users FOREIGN KEY(UserId) REFERENCES AppUsers(Id));
         """;
 
 }

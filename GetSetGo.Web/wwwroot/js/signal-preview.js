@@ -23,9 +23,11 @@
   form.querySelectorAll('[data-preview]').forEach(field => field.addEventListener('input', update)); update();
   const grid = document.querySelector('[data-demo-signal-grid]');
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
-  const styleMap = { INTRADAY: '1', SWING: '2', POSITIONAL: '3', LONG_TERM: '4' };
+  const styleMap = { INTRADAY: '1', SWING: '2', POSITIONAL: '3', SHORT_TERM_DELIVERY: '4' };
   fetch('/data/research-report.json').then(response => response.ok ? response.json() : Promise.reject()).then(report => {
-    const stocks = report.stocks.slice(0, 12);
+    const publishedSymbols = new Set(JSON.parse(grid.dataset.publishedSymbols || '[]').map(symbol => String(symbol).toUpperCase()));
+    const stocks = report.stocks.filter(stock => !publishedSymbols.has(String(stock.symbol).toUpperCase())).slice(0, 100);
+    if (!stocks.length) { grid.innerHTML = '<p class="muted">All generated research cards have already been published.</p>'; return; }
     grid.innerHTML = stocks.map((stock, index) => {
       const call = stock.research_call, news = stock.news || {}, style = stock.research_style?.style || 'INTRADAY';
       return '<article class="demo-signal-card card"><div><span class="style-badge style-' + style.toLowerCase().replace('_', '') + '">' + escape(style.replace('_', ' ')) + '</span><span class="badge ' + call.side.toLowerCase() + '">' + escape(call.side) + '</span></div><h3>' + escape(stock.symbol) + '</h3><p class="demo-headline">' + escape(news.headline || 'AI research setup') + '</p><div class="demo-levels"><span>Entry <b>₹' + Number(call.entry).toFixed(2) + '</b></span><span>SL <b>₹' + Number(call.stop_loss).toFixed(2) + '</b></span><span>Target <b>₹' + Number(call.target).toFixed(2) + '</b></span></div><div class="ratio"><span>Score ' + Number(stock.overall_score).toFixed(1) + '</span><strong>' + Number(call.risk_reward_ratio).toFixed(2) + ' : 1</strong></div><button class="btn secondary" type="button" data-demo-index="' + index + '">Use this signal</button></article>';
@@ -40,5 +42,6 @@
       form.querySelectorAll('[data-preview]').forEach(field => field.dispatchEvent(new Event('input', { bubbles: true })));
       form.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+    grid.querySelector('[data-demo-index="0"]')?.click();
   }).catch(() => { grid.innerHTML = '<p class="validation">Research demo data could not be loaded.</p>'; });
 })();

@@ -1,7 +1,10 @@
+@inject GetSetGo.Web.Data.IAppRepository Repository
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var activeNav = ViewData["ActiveNav"]?.ToString() ?? (currentController == "Orders" ? currentAction : currentController);
+    var notificationUserId = User.Identity?.IsAuthenticated == true && User.IsInRole("Client") ? int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value) : 0;
+    var notifications = notificationUserId > 0 ? await Repository.GetNotificationsAsync(notificationUserId) : Array.Empty<GetSetGo.Web.Models.AppNotification>();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -25,7 +28,7 @@
             <nav>
                 @if(User.IsInRole("Client"))
                 {
-                    <a>Tutorial</a>
+                    <a asp-controller="Tutorial" asp-action="Index" class="@(activeNav == "Tutorial" ? "active" : null)" aria-current="@(activeNav == "Tutorial" ? "page" : null)">Tutorial</a>
                     <a asp-controller="Risk" asp-action="Index" class="@(activeNav == "Risk" ? "active" : null)" aria-current="@(activeNav == "Risk" ? "page" : null)">Risk</a>
                     <a asp-controller="Signals" asp-action="Index" class="@(activeNav == "Signals" ? "active" : null)" aria-current="@(activeNav == "Signals" ? "page" : null)">GET</a>
                     <a asp-controller="Orders" asp-action="Set" class="@(activeNav == "Set" ? "active" : null)" aria-current="@(activeNav == "Set" ? "page" : null)">SET</a>
@@ -34,7 +37,7 @@
                 }
                 else { <a asp-controller="ResearchAdmin" asp-action="Index" class="@(activeNav == "ResearchAdmin" ? "active" : null)" aria-current="@(activeNav == "ResearchAdmin" ? "page" : null)">Research desk</a> }
             </nav>
-            <div class="user-menu"><span>@User.Identity.Name</span><form asp-controller="Account" asp-action="Logout" method="post"><button class="link-button">Logout</button></form></div>
+            <div class="user-menu">@if(User.IsInRole("Client")){<details class="notification-panel"><summary>🔔@if(notifications.Any(x=>!x.IsRead)){<i>@notifications.Count(x=>!x.IsRead)</i>}</summary><div><b>Notifications</b>@if(notifications.Count==0){<p>No notifications yet.</p>}else{foreach(var note in notifications){<p class="@(note.IsRead?"":"unread")">@note.Message</p>}<form asp-controller="Notifications" asp-action="MarkAllRead" method="post"><button class="link-button">Mark all read</button></form>}</div></details><a class="profile-link" asp-controller="Profile" asp-action="Index">@User.Identity.Name</a>}else{<span>@User.Identity.Name</span>}<form asp-controller="Account" asp-action="Logout" method="post"><button class="link-button">Logout</button></form></div>
         }
     </header>
     <main class="shell">

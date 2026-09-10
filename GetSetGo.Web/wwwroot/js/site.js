@@ -41,6 +41,27 @@ $(function(){
         alert(message); button.prop('disabled',false);
       });
   });
+  let pendingSetForm=null;
+  const setDialog=document.getElementById('setConfirmDialog');
+  const formatMoney=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',minimumFractionDigits:2}).format(Number(value)||0);
+  $('.set-order-action').on('submit',function(event){
+    event.preventDefault(); const form=$(this); form.find('button[type=submit]').prop('disabled',true);
+    $.getJSON(form.data('preview-api')).done(function(preview){
+      const signal=preview.signal; pendingSetForm=form;
+      $('#setConfirmTitle').text(signal.symbol+' '+signal.side+' order'); $('#setConfirmMessage').text(preview.message);
+      $('#setConfirmLevels').text(formatMoney(signal.entryPrice)+' / '+formatMoney(signal.stopLoss)+' / '+formatMoney(signal.targetPrice));
+      $('#setConfirmQuantity').text(preview.quantity+' shares'); $('#setConfirmValue').text(formatMoney(preview.requiredOrderValue));
+      $('#setConfirmCapital').text(formatMoney(preview.availableStyleCapital)); $('#setConfirmLoss').text(formatMoney(preview.maximumPossibleLoss));
+      $('#setConfirmRatio').text(Number(Math.abs(signal.targetPrice-signal.entryPrice)/Math.abs(signal.entryPrice-signal.stopLoss)).toFixed(2)+' : 1');
+      setDialog.showModal(); form.find('button[type=submit]').prop('disabled',false);
+    }).fail(function(xhr){ alert(xhr.responseJSON?.message||'Unable to prepare this order.'); form.find('button[type=submit]').prop('disabled',false); });
+  });
+  $('#confirmSetButton').on('click',function(){
+    if(!pendingSetForm)return; const button=$(this).prop('disabled',true);
+    $.ajax({url:pendingSetForm.data('api'),method:'POST',data:pendingSetForm.serialize()}).done(function(response){
+      sessionStorage.setItem('apiMessage',response.message); window.location.assign(pendingSetForm.data('redirect'));
+    }).fail(function(xhr){ alert(xhr.responseJSON?.message||'The order could not be set.'); button.prop('disabled',false); setDialog.close(); });
+  });
   const apiMessage=sessionStorage.getItem('apiMessage');
   if(apiMessage){sessionStorage.removeItem('apiMessage');$('.shell').prepend($('<div class="alert success">').text(apiMessage));}
   window.setTimeout(()=>$('.alert').fadeOut(),4500);

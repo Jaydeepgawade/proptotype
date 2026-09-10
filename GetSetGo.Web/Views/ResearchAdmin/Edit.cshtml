@@ -1,0 +1,12 @@
+@model ResearchSignal
+@{ ViewData["Title"] = "Edit research signal"; }
+<div class="page-head"><div><div class="eyebrow">RESEARCH ADMIN</div><h1>Edit research signal</h1><p>Update the levels and validity before clients see this signal.</p></div><a class="btn secondary" asp-action="Index">Back to Research desk</a></div>
+<form method="post" class="card form-card wide signal-edit-form">
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="All" class="validation"></div>
+    <div class="field-grid three"><div><label asp-for="Symbol"></label><input asp-for="Symbol" /></div><div><label asp-for="Side"></label><select asp-for="Side" asp-items="Html.GetEnumSelectList<SignalSide>()"></select></div><div><label asp-for="TradingStyle">Style</label><select asp-for="TradingStyle" asp-items="Html.GetEnumSelectList<TradingStyle>()"></select></div></div>
+    <div class="field-grid three"><div><label asp-for="EntryPrice">Entry</label><input asp-for="EntryPrice" type="number" step="0.01" /></div><div><label asp-for="StopLoss">Stop-loss</label><input asp-for="StopLoss" type="number" step="0.01" /></div><div><label asp-for="TargetPrice">Target</label><input asp-for="TargetPrice" type="number" step="0.01" /></div></div>
+    <div class="field-grid"><div><label asp-for="ValidFromUtc">Valid from (UTC)</label><input asp-for="ValidFromUtc" type="datetime-local" /></div><div><label asp-for="ValidUntilUtc">Valid until (UTC)</label><input asp-for="ValidUntilUtc" type="datetime-local" /></div></div>
+    <label asp-for="AiNewsSummary">AI research brief</label><textarea asp-for="AiNewsSummary" rows="6"></textarea>
+    <div class="admin-form-actions"><button class="btn primary" type="submit">Save changes</button><a class="btn secondary" asp-action="Index">Cancel</a></div>
+</form>

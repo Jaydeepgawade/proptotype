@@ -1,0 +1,22 @@
+@{ ViewData["Title"] = "How to use GET·SET·GO"; }
+<div class="page-head tutorial-head">
+    <div><div class="eyebrow">QUICK START GUIDE</div><h1>Start trading in 5 simple steps</h1><p>Follow the steps in order. You can return here anytime.</p></div>
+    <a class="btn primary" asp-controller="Risk" asp-action="Index">Start Step 1</a>
+</div>
+<section class="tutorial-intro card"><strong>New here?</strong><span>First set your trading money and risk. After that, GET shows signals that match your setup.</span></section>
+<section class="learning-guide card" aria-label="Learn the basics">
+    <div><div class="eyebrow">LEARN THE BASICS</div><h2>Understand the workspace before your first order</h2></div>
+    <div class="learning-topics">
+        <article><b>1. Getting started</b><p>Start with Risk setup. Choose a trading type and decide how much money and loss you are comfortable with.</p></article>
+        <article><b>2. How GET signals work</b><p>GET shows only research signals that match your saved trading style and minimum reward-risk rule.</p></article>
+        <article><b>3. Before you click SET</b><p>Check Entry, Stop-loss and Target. The card also shows money needed for one share and money available in that trading type.</p></article>
+        <article><b>4. When an order cannot be placed</b><p>If available money is lower than one share price, increase the style allocation or choose another signal.</p></article>
+    </div>
+</section>
+<section class="tutorial-steps" aria-label="How to use the client workspace">
+    <article class="tutorial-step card"><span class="tutorial-number">1</span><div><div class="eyebrow">START HERE</div><h2>Set your trading money</h2><p>Enter your total money, choose a trading type, set its allocation and decide how much loss is acceptable.</p><a class="btn primary" asp-controller="Risk" asp-action="Index">Open Risk setup</a></div></article>
+    <article class="tutorial-step card"><span class="tutorial-number">2</span><div><div class="eyebrow">NEXT</div><h2>Review GET signals</h2><p>See research ideas that match your selected style and reward-risk rule. Check entry, stop-loss and target.</p><a class="btn secondary" asp-controller="Signals" asp-action="Index">Open GET signals</a></div></article>
+    <article class="tutorial-step card"><span class="tutorial-number">3</span><div><div class="eyebrow">WHEN READY</div><h2>SET your order</h2><p>Choose a signal and click SET. The system shows whether one share is affordable and calculates the quantity from your risk rules.</p><a class="btn secondary" asp-controller="Orders" asp-action="Set">Open SET orders</a></div></article>
+    <article class="tutorial-step card"><span class="tutorial-number">4</span><div><div class="eyebrow">TRACK</div><h2>GO and track the trade</h2><p>Execute a SET order within its validity period. Go/Tracker shows your executed trades and their status.</p><a class="btn secondary" asp-controller="Orders" asp-action="Tracker">Open Go/Tracker</a></div></article>
+    <article class="tutorial-step card"><span class="tutorial-number">5</span><div><div class="eyebrow">FINISH</div><h2>Check order history</h2><p>Review completed, cancelled and expired orders. Use the Excel button when you need an export.</p><a class="btn secondary" asp-controller="Orders" asp-action="History">Open History</a></div></article>
+</section>

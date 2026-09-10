@@ -1,27 +1,28 @@
 @model ResearchSignal
+@using System.Text.Json
 @{ ViewData["Title"] = "Generate research signal"; }
 <div class="page-head"><div>@* <div class="eyebrow">AI RESEARCH</div> *@<h1>Generate research signal</h1><p>Complete the setup and review the client card before publishing.</p></div></div>
 <div class="research-create-layout">
 <form method="post" class="card form-card" data-signal-form><div asp-validation-summary="All" class="validation"></div>
 <div class="field-grid three"><div><label asp-for="Symbol"></label><input asp-for="Symbol" placeholder="RELIANCE" data-preview="symbol"/></div><div><label asp-for="Side"></label><select asp-for="Side" asp-items="Html.GetEnumSelectList<SignalSide>()" data-preview="side"></select></div><div><label asp-for="TradingStyle">Style</label><select asp-for="TradingStyle" asp-items="Html.GetEnumSelectList<TradingStyle>()" data-preview="style"></select></div></div>
-<div class="field-grid three"><div><label asp-for="EntryPrice">Entry</label><input asp-for="EntryPrice" type="number" step="0.05" data-preview="entry"/></div><div><label asp-for="StopLoss">Stop-loss</label><input asp-for="StopLoss" type="number" step="0.05" data-preview="stop"/></div><div><label asp-for="TargetPrice">Target</label><input asp-for="TargetPrice" type="number" step="0.05" data-preview="target"/></div></div>
+<div class="field-grid three"><div><label asp-for="EntryPrice">Entry</label><input asp-for="EntryPrice" type="number" step="0.01" data-preview="entry"/></div><div><label asp-for="StopLoss">Stop-loss</label><input asp-for="StopLoss" type="number" step="0.01" data-preview="stop"/></div><div><label asp-for="TargetPrice">Target</label><input asp-for="TargetPrice" type="number" step="0.01" data-preview="target"/></div></div>
 <div class="field-grid"><div><label asp-for="ValidFromUtc">Valid from (UTC)</label><input asp-for="ValidFromUtc" type="datetime-local"/></div><div><label asp-for="ValidUntilUtc">Valid until (UTC)</label><input asp-for="ValidUntilUtc" type="datetime-local"/></div></div>
 <label asp-for="AiNewsSummary">AI research brief</label><textarea asp-for="AiNewsSummary" rows="5" placeholder="Write the news context, technical setup and reason for this call..." data-preview="brief"></textarea>
 <button class="btn primary" type="submit">Generate &amp; publish research</button> <a class="btn secondary" asp-action="Index">Cancel</a></form>
 <aside class="signal-preview-wrap" aria-label="Live signal preview">
-        <div class="preview-label"><span class="eyebrow"> This is an AI generated research calls</span>@* <span>Client card preview</span> *@</div>
+        <div class="preview-label"><span class="eyebrow">AI-GENERATED RESEARCH PREVIEW</span>@* <span>Client card preview</span> *@</div>
     <article class="signal-card preview-card">
-        <div class="signal-top"><span class="style-badge style-intraday" data-preview-style>Intraday</span><span class="badge buy" data-preview-side>BUY</span></div>
-        <h2 data-preview-symbol>RELIANCE</h2>
+        <div class="signal-top"><span class="style-badge" data-preview-style>Loading</span><span class="badge" data-preview-side>--</span></div>
+        <h2 data-preview-symbol>Loading research...</h2>
         <div class="prices"><div><span>Entry</span><b data-preview-entry>₹0.00</b></div><div><span>Stop-loss</span><b data-preview-stop>₹0.00</b></div><div><span>Target</span><b data-preview-target>₹0.00</b></div></div>
         <div class="ratio"><span>Reward : risk</span><strong data-preview-ratio>—</strong></div>
-        <div class="news"><strong>AI research brief</strong><p data-preview-brief>Your research context will appear here.</p></div>
+        <div class="news"><strong>AI research brief</strong><p data-preview-brief>Loading the first generated research signal...</p></div>
         <small>Preview only · Publishing makes this card available to matching clients.</small>
     </article>
 </aside>
 </div>
 <section class="demo-gallery" aria-label="JSON research signal demos">
     <div class="page-head"><div>@* <div class="eyebrow">JSON RESEARCH DEMOS</div> *@<h2>Choose a generated research card</h2><p>Click a card to load its trade levels and news brief into the form.</p></div></div>
-    <div class="demo-signal-grid" data-demo-signal-grid><p class="muted">Loading research demos…</p></div>
+    <div class="demo-signal-grid" data-demo-signal-grid data-published-symbols='@Html.Raw(JsonSerializer.Serialize((IEnumerable<string>?)ViewData["PublishedSymbols"] ?? Array.Empty<string>()))'><p class="muted">Loading research demos...</p></div>
 </section>
 @section Scripts { <script src="~/js/signal-preview.js" asp-append-version="true"></script> }

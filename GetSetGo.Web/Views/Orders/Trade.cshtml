@@ -51,6 +51,10 @@
         else
         {
             <p class="trade-note">Order status: <strong>@order.Status</strong></p>
+            @if (order.Status == OrderStatus.Executed && Model.SimulatedCurrentPrice is decimal current)
+            {
+                <div class="simulated-pnl @(Model.SimulatedPnl >= 0 ? "profit" : "loss")"><span>Simulated P&amp;L</span><strong>@(Model.SimulatedPnl >= 0 ? "+" : "-")&#8377;@Math.Abs(Model.SimulatedPnl).ToString("N2")</strong><small>Latest simulated close: &#8377;@current.ToString("N2")</small><small>Target distance: &#8377;@Model.TargetDistance.ToString("N2") · Stop-loss distance: &#8377;@Model.StopLossDistance.ToString("N2")</small></div>
+            }
         }
         <small class="trade-note muted">Simulated execution only. No broker order is placed.</small>
     </aside>
