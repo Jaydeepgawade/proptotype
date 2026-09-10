@@ -1,6 +1,6 @@
-﻿# GetSetGo API Endpoints and Request Bodies
+# GetSetGo API Endpoints and Request Bodies
 
-The project contains **13 API endpoints**. This reference was verified against the controllers and request models. Requests have not been tested against a running server.
+The project contains **14 API endpoints**. This reference was verified against the controllers and request models. Requests have not been tested against a running server.
 
 ## Base URL and Postman setup
 
@@ -310,3 +310,18 @@ Protected APIs return `401` when unauthenticated and `403` when the required rol
 - `GetSetGo.Web/Models/DomainModels.cs` - enum values
 - `GetSetGo.Web/Program.cs` - cookie authentication and CSRF header configuration
 - `GetSetGo.Web/Properties/launchSettings.json` - local URL
+
+## 14. Company and market news for an order
+
+**GET** `{{baseUrl}}/api/v1/orders/{{orderId}}/news`
+
+- Access: Client; the order must belong to the signed-in user.
+- Body: **none**
+- Response fields: `symbol`, `company`, `status`, `message`, `fetchedUtc`, `nextRefreshUtc`, `articles`, `summary`.
+- Status: `ready` (AI summary), `news-only` (headlines without AI), or `unavailable` (no recent news retrieved).
+- Each article contains an `id`, `title`, `url`, `publisher`, `publishedUtc` and `category`.
+- Each summary point contains `text` and `sourceIds` referring to returned articles.
+- Missing/other-user order: `404`. Company mapping not configured: `422`.
+- Successful summaries are cached for 10 minutes. Failure/news-only results are cached for 30 seconds. Refresh does not bypass the cache.
+
+See `MARKET-NEWS-SETUP.md` for local AI setup. The application now has **14 API operations**.

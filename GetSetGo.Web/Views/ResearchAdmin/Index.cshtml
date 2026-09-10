@@ -1,4 +1,13 @@
 @model IReadOnlyList<ResearchSignal>
+@using System.Globalization
 @{ViewData["Title"]="Research desk";}
-<div class="page-head"><div><div class="eyebrow">RESEARCH ADMIN</div><h1>EOD signal desk</h1><p>Publish high-conviction research for automatic client matching.</p></div><a class="btn primary" asp-action="Create">+ New signal</a></div>
-<div class="table-wrap card"><table><thead><tr><th>Symbol</th><th>Side/style</th><th>Entry / stop / target</th><th>R:R</th><th>Valid until</th><th>State</th></tr></thead><tbody>@foreach(var s in Model){<tr><td><b>@s.Symbol</b></td><td>@s.Side<small>@s.TradingStyle</small></td><td>₹@s.EntryPrice / ₹@s.StopLoss / ₹@s.TargetPrice</td><td>@s.RewardRiskRatio : 1</td><td>@s.ValidUntilUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</td><td><span class="status @(s.IsActive?"executed":"cancelled")">@(s.IsActive?"Active":"Inactive")</span></td></tr>}</tbody></table></div>
+<div class="page-head"><div><h1>EOD signal desk</h1><p>Manage published research signals.</p></div><a class="btn primary" asp-action="Create">+ New signal</a></div>
+<section class="record-list card" data-record-list aria-label="Research signals"><div class="record-scroll" tabindex="0" role="region" aria-label="Research signals table">
+<table class="record-table"><thead><tr><th>Stock</th><th data-filter="Style">Style</th><th data-filter="Side">Side</th><th class="numeric" data-type="number">Entry</th><th class="numeric" data-type="number">Stop-loss</th><th class="numeric" data-type="number">Target</th><th class="numeric" data-type="number">R:R</th><th data-type="date">Valid until (UTC)</th><th data-filter="Status">Status</th></tr></thead><tbody>
+@foreach(var s in Model)
+{
+    var state = !s.IsActive ? "Inactive" : s.ValidUntilUtc < DateTime.UtcNow ? "Expired" : s.ValidFromUtc > DateTime.UtcNow ? "Scheduled" : "Active";
+<tr><td><strong>@s.Symbol</strong></td><td>@(s.TradingStyle == TradingStyle.ShortTermDelivery ? "Short-term delivery" : s.TradingStyle.ToString())</td><td><span class="badge @s.Side.ToString().ToLowerInvariant()">@s.Side</span></td>
+<td class="numeric" data-sort="@s.EntryPrice.ToString(CultureInfo.InvariantCulture)">&#8377;@s.EntryPrice.ToString("N2")</td><td class="numeric" data-sort="@s.StopLoss.ToString(CultureInfo.InvariantCulture)">&#8377;@s.StopLoss.ToString("N2")</td><td class="numeric" data-sort="@s.TargetPrice.ToString(CultureInfo.InvariantCulture)">&#8377;@s.TargetPrice.ToString("N2")</td><td class="numeric" data-sort="@s.RewardRiskRatio.ToString(CultureInfo.InvariantCulture)">@s.RewardRiskRatio : 1</td><td data-sort="@s.ValidUntilUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@s.ValidUntilUtc.ToString("dd MMM yyyy")<small>@s.ValidUntilUtc.ToString("HH:mm")</small></td><td><span class="status @(state == "Active" ? "executed" : state == "Scheduled" ? "set" : "expired")">@state</span></td></tr>
+}
+</tbody></table></div></section>

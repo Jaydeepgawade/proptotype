@@ -21,9 +21,9 @@ public sealed class RiskProfile
     public int UserId { get; set; }
     [Range(1000, 100000000)] public decimal Capital { get; set; }
     [Required] public TradingStyle TradingStyle { get; set; }
-    [Range(0.1, 10)] public decimal RiskPerTradePercent { get; set; } = 1;
-    [Range(0.1, 25)] public decimal MaxTotalRiskPercent { get; set; } = 3;
-    [Range(1, 5)] public decimal MinimumRewardRiskRatio { get; set; } = 2;
+    [Range(0.1, 5)] public decimal RiskPerTradePercent { get; set; } = 1;
+    [Range(0.1, 5)] public decimal MaxTotalRiskPercent { get; set; } = 3;
+    [Range(1, 5)] public decimal MinimumRewardRiskRatio { get; set; } = 1;
     public bool IsActive { get; set; } = true;
 }
 
@@ -49,6 +49,7 @@ public sealed class TradeOrder
     public int Id { get; set; }
     public int UserId { get; set; }
     public int SignalId { get; set; }
+    public TradingStyle? TradingStyle { get; set; }
     public string Symbol { get; set; } = "";
     public SignalSide Side { get; set; }
     public decimal EntryPrice { get; set; }

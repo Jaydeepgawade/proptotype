@@ -1,0 +1,60 @@
+﻿@model OrderDetailsViewModel
+@using System.Globalization
+@{
+    var order = Model.Order;
+    ViewData["ActiveNav"] ??= order.Status == OrderStatus.Set ? "Set" : order.Status == OrderStatus.Executed ? "Go" : "Tracker";
+    ViewData["Title"] = $"Trade {order.Symbol}";
+}
+<div class="page-head trade-heading">
+    <div><div class="eyebrow">SET / TRADING WORKSPACE</div><h1>@order.Symbol <span class="badge @order.Side.ToString().ToLowerInvariant()">@order.Side</span></h1><p>Order #@order.Id &middot; @(Model.Signal?.TradingStyle.ToString() ?? "Research signal")</p></div>
+    <a class="btn secondary" asp-action="@ViewData["ActiveNav"]">Back to @ViewData["ActiveNav"]</a>
+</div>
+<div class="trade-workspace">
+    <div class="trade-main">
+        <section class="card trade-chart-card">
+            <div class="trade-chart-heading"><div><h2>Price chart</h2><p class="muted">Daily candles &middot; Demo market data</p></div><span class="trade-demo">SIMULATION</span></div>
+            <div class="trade-levels">
+                <div><span>Entry</span><strong>&#8377;@order.EntryPrice.ToString("N2")</strong></div>
+                <div><span>Stop-loss</span><strong class="trade-loss">&#8377;@order.StopLoss.ToString("N2")</strong></div>
+                <div><span>Target</span><strong class="trade-gain">&#8377;@order.TargetPrice.ToString("N2")</strong></div>
+            </div>
+            <div id="tradeChart" data-url="@Url.Action("Get", "MarketDataApi", new { symbol = order.Symbol, timeframe = "1D", take = 60 })" data-entry="@order.EntryPrice.ToString(CultureInfo.InvariantCulture)" data-stop="@order.StopLoss.ToString(CultureInfo.InvariantCulture)" data-target="@order.TargetPrice.ToString(CultureInfo.InvariantCulture)" aria-label="Demo price chart for @order.Symbol"></div>
+            <p id="tradeChartMessage" class="trade-chart-message" role="status">Loading demo candles...</p>
+            <button id="retryTradeChart" class="btn secondary" type="button" hidden>Retry chart</button>
+        </section>
+        <section class="card form-card trade-research"><h2>Research note</h2><p>@(Model.Signal?.AiNewsSummary ?? "No research note is available.")</p></section>
+    </div>
+    <aside class="card trade-ticket">
+        <div class="eyebrow">YOUR ORDER</div><h2>Review &amp; execute</h2>
+        <dl class="order-facts">
+            <div><dt>Symbol / side</dt><dd>@order.Symbol / @order.Side</dd></div>
+            <div><dt>Quantity</dt><dd>@order.Quantity shares</dd></div>
+            <div><dt>Entry value</dt><dd>&#8377;@Model.OrderValue.ToString("N2")</dd></div>
+            <div><dt>Risk per share</dt><dd>&#8377;@Model.PerShareRisk.ToString("N2")</dd></div>
+            <div><dt>Potential reward at target</dt><dd>&#8377;@((Math.Abs(order.TargetPrice - order.EntryPrice) * order.Quantity).ToString("N2"))</dd></div>
+            <div><dt>Reward / risk</dt><dd>@Model.RewardRiskRatio.ToString("N2") : 1</dd></div>
+            <div><dt>Valid until (UTC)</dt><dd>@order.ValidUntilUtc.ToString("dd MMM yyyy, HH:mm")</dd></div>
+        </dl>
+        <div class="trade-risk"><span>Planned risk at stop-loss</span><strong>&#8377;@order.RiskAmount.ToString("N2")</strong><small>@order.Quantity shares &times; &#8377;@Model.PerShareRisk.ToString("N2") per-share risk.</small></div>
+        @if (order.Status == OrderStatus.Set)
+        {
+        <p class="muted trade-note">Review the setup, then press GO to execute in simulation mode.</p>
+        <div class="trade-ticket-actions">
+            <form asp-action="Go" method="post" class="api-action" data-api="/api/v1/orders/@order.Id/go" data-redirect="@Url.Action("Go", "Orders")" data-confirm="Execute this simulated order now?">
+                <input type="hidden" name="id" value="@order.Id"/><button class="btn go" type="submit">GO &mdash; Execute order</button>
+            </form>
+            <form asp-action="Cancel" method="post" class="api-action" data-api="/api/v1/orders/@order.Id/cancel" data-redirect="@Url.Action("Set", "Orders")" data-confirm="Cancel this SET order?">
+                <input type="hidden" name="id" value="@order.Id"/><button class="btn secondary" type="submit">Cancel order</button>
+            </form>
+        </div>
+        }
+        else
+        {
+            <p class="trade-note">Order status: <strong>@order.Status</strong></p>
+        }
+        <small class="trade-note muted">Simulated execution only. No broker order is placed.</small>
+    </aside>
+</div>
+@section Scripts {
+    <script src="~/js/trade.js" asp-append-version="true"></script>
+}

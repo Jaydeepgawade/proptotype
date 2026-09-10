@@ -1,0 +1,32 @@
+@model OrderDetailsViewModel
+@{ ViewData["Title"] = $"Order #{Model.Order.Id}"; var order = Model.Order; }
+<div class="page-head">
+    <div><div class="eyebrow">ORDER DETAILS</div><h1>@order.Symbol <span class="badge @order.Side.ToString().ToLowerInvariant()">@order.Side</span></h1><p>Order #@order.Id &middot; Simulated execution</p></div>
+    <a class="btn secondary" asp-action="Tracker">Back to tracker</a>
+</div>
+<div class="order-details-grid">
+    <section class="card form-card"><h2>Order information</h2><dl class="order-facts">
+        <div><dt>Order ID</dt><dd>@order.Id</dd></div>
+        <div><dt>Signal ID</dt><dd>@order.SignalId</dd></div>
+        <div><dt>Symbol</dt><dd>@order.Symbol</dd></div>
+        <div><dt>Side</dt><dd>@order.Side</dd></div>
+        <div><dt>Trading style</dt><dd>@(Model.Signal?.TradingStyle.ToString() ?? "Unavailable")</dd></div>
+        <div><dt>Status</dt><dd><span class="status @order.Status.ToString().ToLowerInvariant()">@order.Status</span></dd></div>
+    </dl></section>
+    <section class="card form-card"><h2>Prices and risk</h2><dl class="order-facts">
+        <div><dt>Quantity</dt><dd>@order.Quantity shares</dd></div>
+        <div><dt>Order value at entry</dt><dd>&#8377;@Model.OrderValue.ToString("N2")</dd></div>
+        <div><dt>Entry price</dt><dd>&#8377;@order.EntryPrice.ToString("N2")</dd></div>
+        <div><dt>Stop-loss</dt><dd>&#8377;@order.StopLoss.ToString("N2")</dd></div>
+        <div><dt>Target</dt><dd>&#8377;@order.TargetPrice.ToString("N2")</dd></div>
+        <div><dt>Risk per share</dt><dd>&#8377;@Model.PerShareRisk.ToString("N2")</dd></div>
+        <div><dt>Total order risk</dt><dd>&#8377;@order.RiskAmount.ToString("N2")</dd></div>
+        <div><dt>Reward / risk</dt><dd>@Model.RewardRiskRatio.ToString("N2") : 1</dd></div>
+    </dl></section>
+    <section class="card form-card"><h2>Dates and execution</h2><dl class="order-facts">
+        <div><dt>Created (UTC)</dt><dd>@order.CreatedUtc.ToString("dd MMM yyyy, HH:mm:ss")</dd></div>
+        <div><dt>Valid until (UTC)</dt><dd>@order.ValidUntilUtc.ToString("dd MMM yyyy, HH:mm:ss")</dd></div>
+        <div><dt>Executed (UTC)</dt><dd>@(order.ExecutedUtc?.ToString("dd MMM yyyy, HH:mm:ss") ?? "Not executed")</dd></div>
+    </dl><p class="muted">Execution is simulated. No broker order is placed.</p></section>
+    <section class="card form-card"><h2>Research summary</h2><p class="order-summary">@(Model.Signal?.AiNewsSummary ?? "Research information is unavailable for this order.")</p></section>
+</div>

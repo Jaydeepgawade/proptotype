@@ -56,8 +56,8 @@ builder.Services.AddScoped<DatabaseInitializer>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
@@ -91,7 +91,7 @@ if (app.Environment.IsDevelopment())
             """.ReplaceLineEndings(" ")); // Embedded JS requires one line, single-quoted strings and a regular function.
     });
     DevelopmentBrowserLauncher.Register(app);
-}
+//}
 
 if (!app.Environment.IsDevelopment())
 {

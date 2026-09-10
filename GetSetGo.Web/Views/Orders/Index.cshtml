@@ -1,5 +1,30 @@
-@model IReadOnlyList<TradeOrder>
-@{ViewData["Title"]="Orders and tracker";}
-<div class="page-head"><div><div class="eyebrow">SET · GO · TRACKER</div><h1>Your orders</h1><p>Review auto-calculated quantities, execute valid orders and track status.</p></div><a class="btn primary" asp-controller="Signals" asp-action="Index">Get more signals</a></div>
-@if(Model.Count==0){<div class="empty card"><h2>No orders yet</h2><p>Choose a matching GET signal and press SET.</p></div>}
-else{<div class="table-wrap card"><table><thead><tr><th>Stock</th><th>Setup</th><th>Prices</th><th>Risk</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody>@foreach(var o in Model){<tr><td><b>@o.Symbol</b><small>@o.Side</small></td><td>@o.Quantity shares<small>₹@((o.EntryPrice*o.Quantity).ToString("N0")) value</small></td><td>₹@o.EntryPrice <small>SL @o.StopLoss · T @o.TargetPrice</small></td><td>₹@o.RiskAmount.ToString("N2")</td><td>@o.ValidUntilUtc.ToLocalTime().ToString("dd MMM")<small>@o.ValidUntilUtc.ToLocalTime().ToString("hh:mm tt")</small></td><td><span class="status @o.Status.ToString().ToLower()">@o.Status</span></td><td>@if(o.Status==OrderStatus.Set){<div class="actions"><form asp-action="Go" method="post" class="api-action" data-api="/api/v1/orders/@o.Id/go" data-confirm="Execute this simulated order now?"><input type="hidden" name="id" value="@o.Id"/><button class="btn go">GO</button></form><form asp-action="Cancel" method="post" class="api-action" data-api="/api/v1/orders/@o.Id/cancel" data-confirm="Cancel this SET order?"><input type="hidden" name="id" value="@o.Id"/><button class="btn text">Cancel</button></form></div>}else{<span class="muted">—</span>}</td></tr>}</tbody></table></div>}
+@model OrderListViewModel
+@using System.Globalization
+@{ ViewData["Title"] = Model.Section == "SET" ? "Prepared orders" : Model.Section == "GO" ? "Open trades" : "Order tracker"; }
+<div class="page-head"><div><h1>@ViewData["Title"]</h1><p>@(Model.Section == "SET" ? "Review pending orders before execution." : Model.Section == "GO" ? "Your executed simulated trades." : "All your orders, with their original order IDs and latest status.")</p></div></div>
+<section class="record-list card" aria-label="@ViewData["Title"]" data-record-list>
+<div class="record-scroll" tabindex="0" role="region" aria-label="Orders table, scroll horizontally for more columns">
+<table class="record-table"><thead><tr>
+<th data-type="number">Order</th><th>Stock</th><th data-filter="Style">Style</th><th data-filter="Side">Side</th><th data-type="number" class="numeric">Quantity / value</th><th data-type="number" class="numeric">Entry / SL / target</th><th data-type="number" class="numeric">Risk</th><th data-type="date">Valid until (UTC)</th>
+@if (Model.Section == "Tracker") { <th data-type="date">Created (UTC)</th> }
+@if (Model.Section != "SET") { <th data-type="date">Executed (UTC)</th> }
+@if (Model.Section == "Tracker") { <th data-filter="Status">Status</th> }
+<th data-no-sort class="record-action">Details</th></tr></thead><tbody>
+@foreach (var o in Model.Orders)
+{
+<tr>
+<td data-sort="@o.Id"><span class="order-number">#@o.Id</span></td>
+<td><strong>@o.Symbol</strong></td>
+<td>@(o.TradingStyle == TradingStyle.ShortTermDelivery ? "Short-term delivery" : o.TradingStyle?.ToString() ?? "Unavailable")</td>
+<td><span class="badge @o.Side.ToString().ToLowerInvariant()">@o.Side</span></td>
+<td class="numeric" data-sort="@o.Quantity"><strong>@o.Quantity shares</strong><small>&#8377;@((o.EntryPrice * o.Quantity).ToString("N2"))</small></td>
+<td class="numeric" data-sort="@o.EntryPrice.ToString(CultureInfo.InvariantCulture)"><strong>&#8377;@o.EntryPrice.ToString("N2")</strong><small>SL @o.StopLoss.ToString("N2")</small><small>T @o.TargetPrice.ToString("N2")</small></td>
+<td class="numeric" data-sort="@o.RiskAmount.ToString(CultureInfo.InvariantCulture)">&#8377;@o.RiskAmount.ToString("N2")</td>
+<td data-sort="@o.ValidUntilUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@o.ValidUntilUtc.ToString("dd MMM yyyy")<small>@o.ValidUntilUtc.ToString("HH:mm")</small></td>
+@if (Model.Section == "Tracker") { <td data-sort="@o.CreatedUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@o.CreatedUtc.ToString("dd MMM yyyy")<small>@o.CreatedUtc.ToString("HH:mm")</small></td> }
+@if (Model.Section != "SET") { <td data-sort="@(o.ExecutedUtc?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "")">@(o.ExecutedUtc?.ToString("dd MMM yyyy") ?? "Not executed")<small>@o.ExecutedUtc?.ToString("HH:mm")</small></td> }
+@if (Model.Section == "Tracker") { <td><span class="status @o.Status.ToString().ToLowerInvariant()">@o.Status</span></td> }
+<td class="record-action"><a class="btn secondary" asp-action="Trade" asp-route-id="@o.Id" asp-route-section="@Model.Section">@(Model.Section == "SET" ? "SET" : "View")<span class="sr-only"> order #@o.Id</span></a></td>
+</tr>
+}
+</tbody></table></div></section>

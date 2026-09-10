@@ -53,33 +53,62 @@ public sealed class DatabaseInitializer(IConfiguration configuration, IPasswordS
         await SeedMarketCandlesAsync(connection);
     }
 
-    private static async Task SeedMarketCandlesAsync(SqlConnection connection)
+    internal static async Task SeedMarketCandlesAsync(SqlConnection connection)
     {
-        await using(var count=connection.CreateCommand())
+        // These prices and candles are synthetic demo data, not exchange prices.
+        var instruments = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
         {
-            count.CommandText="SELECT COUNT_BIG(1) FROM MarketCandles";
-            if(Convert.ToInt64(await count.ExecuteScalarAsync())>0)return;
+            ["RELIANCE"] = 2950m, ["TCS"] = 4180m, ["HDFCBANK"] = 1720m,
+            ["M&M"] = 3100m, ["KSB"] = 100m, ["RELIANCE X"] = 100m,
+            ["INFY"] = 1500m, ["ICICIBANK"] = 1200m, ["SBIN"] = 800m,
+            ["ITC"] = 450m, ["TATAMOTORS"] = 950m, ["WIPRO"] = 500m
+        };
+        // Use each published symbol's latest entry as its demo starting price.
+        await using (var signals = connection.CreateCommand())
+        {
+            signals.CommandText = "SELECT Symbol,EntryPrice FROM ResearchSignals ORDER BY Id";
+            await using var reader = await signals.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                instruments[reader.GetString(0).Trim().ToUpperInvariant()] = reader.GetDecimal(1);
         }
 
-        var instruments=new Dictionary<string,decimal>{{"RELIANCE",2820m},{"TCS",3975m},{"HDFCBANK",1590m},{"M&M",2980m}};
-        var random=new Random(20260908);
-        await using var transaction=await connection.BeginTransactionAsync();
-        foreach(var instrument in instruments)
+        var dates = new List<DateTime>();
+        for (var date = DateTime.UtcNow.Date.AddDays(-1); dates.Count < 60; date = date.AddDays(-1))
+            if (date.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday) dates.Add(date);
+        dates.Reverse();
+
+        await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+        foreach (var instrument in instruments.OrderBy(x => x.Key, StringComparer.Ordinal))
         {
-            var price=instrument.Value;
-            var date=DateTime.UtcNow.Date.AddDays(-85);
-            for(var i=0;i<60;)
+            // Check per symbol so an existing database also receives newly added companies.
+            await using var exists = connection.CreateCommand();
+            exists.Transaction = transaction;
+            exists.CommandText = "SELECT COUNT_BIG(1) FROM MarketCandles WITH (UPDLOCK,HOLDLOCK) WHERE Symbol=@Symbol";
+            exists.Parameters.AddWithValue("@Symbol", instrument.Key);
+            if (Convert.ToInt64(await exists.ExecuteScalarAsync()) > 0) continue;
+
+            var seed = 17;
+            foreach (var character in instrument.Key) seed = unchecked(seed * 31 + character);
+            var random = new Random(seed);
+            var price = Math.Max(.01m, instrument.Value);
+            foreach (var date in dates)
             {
-                date=date.AddDays(1); if(date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)continue;
-                var open=Math.Round(price+(decimal)(random.NextDouble()-.5)*price*.012m,2);
-                var close=Math.Round(open+(decimal)(random.NextDouble()-.47)*price*.018m,2);
-                var high=Math.Round(Math.Max(open,close)+(decimal)random.NextDouble()*price*.009m,2);
-                var low=Math.Round(Math.Min(open,close)-(decimal)random.NextDouble()*price*.009m,2);
-                var volume=random.NextInt64(350_000,4_500_000);
-                await using var insert=connection.CreateCommand(); insert.Transaction=(SqlTransaction)transaction;
-                insert.CommandText="INSERT INTO MarketCandles(Symbol,CandleTimeUtc,[Open],High,Low,[Close],Volume) VALUES(@Symbol,@Time,@Open,@High,@Low,@Close,@Volume)";
-                insert.Parameters.AddWithValue("@Symbol",instrument.Key);insert.Parameters.AddWithValue("@Time",date);insert.Parameters.AddWithValue("@Open",open);insert.Parameters.AddWithValue("@High",high);insert.Parameters.AddWithValue("@Low",low);insert.Parameters.AddWithValue("@Close",close);insert.Parameters.AddWithValue("@Volume",volume);
-                await insert.ExecuteNonQueryAsync(); price=close; i++;
+                var open = Math.Max(.01m, Math.Round(price * (1m + (decimal)(random.NextDouble() - .5) * .012m), 2));
+                var close = Math.Max(.01m, Math.Round(open * (1m + (decimal)(random.NextDouble() - .5) * .018m), 2));
+                var high = Math.Round(Math.Max(open, close) * (1m + (decimal)random.NextDouble() * .009m), 2);
+                var low = Math.Max(.01m, Math.Round(Math.Min(open, close) * (1m - (decimal)random.NextDouble() * .009m), 2));
+                await using var insert = connection.CreateCommand();
+                insert.Transaction = transaction;
+                insert.CommandText = "INSERT INTO MarketCandles(Symbol,CandleTimeUtc,[Open],High,Low,[Close],Volume) VALUES(@Symbol,@Time,@Open,@High,@Low,@Close,@Volume)";
+                insert.Parameters.AddWithValue("@Symbol", instrument.Key);
+                insert.Parameters.AddWithValue("@Time", date);
+                insert.Parameters.AddWithValue("@Open", open);
+                insert.Parameters.AddWithValue("@High", high);
+                insert.Parameters.AddWithValue("@Low", low);
+                insert.Parameters.AddWithValue("@Close", close);
+                insert.Parameters.AddWithValue("@Volume", random.NextInt64(125_000, 4_500_000));
+                await insert.ExecuteNonQueryAsync();
+                price = close;
             }
         }
         await transaction.CommitAsync();

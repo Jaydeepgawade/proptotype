@@ -11,7 +11,7 @@ async function main() {
     const methods = new Set(['get', 'post', 'put', 'patch', 'delete']);
     const operations = Object.values(document.paths)
         .reduce((count, path) => count + Object.keys(path).filter(key => methods.has(key)).length, 0);
-    assert.equal(operations, 13, 'All 13 API operations must be documented');
+    assert.equal(operations, 14, 'All 14 API operations must be documented');
 
     const initializerResponse = await fetch(`${baseUrl}/swagger/index.js`);
     assert.equal(initializerResponse.status, 200);
