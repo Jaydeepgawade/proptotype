@@ -1,51 +1,50 @@
-# Base image - used for running the application
+# Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+
 WORKDIR /app
 
-# Render will access the application on port 8080
 EXPOSE 8080
 
-# Tell ASP.NET Core to listen on all network interfaces
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
-
 
 # Build image
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 ARG BUILD_CONFIGURATION=Release
+
 WORKDIR /src
 
-# Copy project file and restore dependencies
-COPY ["Prototype Sim.csproj", "./"]
-RUN dotnet restore "./Prototype Sim.csproj"
+# Copy project file
+COPY ["GetSetGo.Web/GetSetGo.Web.csproj", "GetSetGo.Web/"]
 
-# Copy the remaining source code
+# Restore dependencies
+RUN dotnet restore "GetSetGo.Web/GetSetGo.Web.csproj"
+
+# Copy source
 COPY . .
 
-# Build the application
-RUN dotnet build "./Prototype Sim.csproj" \
+# Build
+RUN dotnet build "GetSetGo.Web/GetSetGo.Web.csproj" \
     -c $BUILD_CONFIGURATION \
-    -o /app/build
+    -o /app/build \
+    --no-restore
 
-
-# Publish image
+# Publish
 FROM build AS publish
 
 ARG BUILD_CONFIGURATION=Release
 
-RUN dotnet publish "./Prototype Sim.csproj" \
+RUN dotnet publish "GetSetGo.Web/GetSetGo.Web.csproj" \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
-    /p:UseAppHost=false
+    /p:UseAppHost=false \
+    --no-restore
 
-
-# Final production image
+# Final image
 FROM base AS final
 
 WORKDIR /app
 
-# Copy published application
 COPY --from=publish /app/publish .
 
-# Start the application
-ENTRYPOINT ["dotnet", "Prototype Sim.dll"]
+ENTRYPOINT ["dotnet", "GetSetGo.Web.dll"]

@@ -4,6 +4,32 @@ The project contains **13 API endpoints**. This reference was verified against t
 
 ## Base URL and Postman setup
 
+### Swagger and automatic browser launch
+
+Run the **GetSetGo.Web** project profile in Visual Studio (F5 / Ctrl+F5), or run this command from the repository root:
+
+```powershell
+dotnet run --project GetSetGo.Web --launch-profile GetSetGo.Web
+```
+
+After successful startup on Windows, the application opens the website and Swagger in your default browser:
+
+- Website: `https://localhost:55073/`
+- Swagger UI: `https://localhost:55073/swagger`
+- OpenAPI JSON: `https://localhost:55073/swagger/v1/swagger.json`
+
+The browser's settings control whether these URLs appear as tabs or separate windows. The local profile disables Visual Studio's additional browser launch to avoid duplicate pages. Automatic opening applies to the Windows project profile, not the Docker profile. Database initialization must succeed before the app can serve these pages.
+
+Swagger is enabled in Development only. Use **Try it out** on the login endpoint with an existing account, or log in through the website in the same browser. Swagger shares the session cookie and automatically obtains a fresh CSRF token for write requests. Account role restrictions still apply.
+
+To run without opening browser pages, override `Development:OpenBrowserTabs`:
+
+```powershell
+dotnet run --project GetSetGo.Web --launch-profile GetSetGo.Web -- --Development:OpenBrowserTabs=false
+```
+
+### Postman
+
 The local HTTPS URL configured in `GetSetGo.Web/Properties/launchSettings.json` is:
 
 ```text
