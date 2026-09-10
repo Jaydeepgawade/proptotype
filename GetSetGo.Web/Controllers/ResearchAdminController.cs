@@ -18,6 +18,8 @@ public sealed class ResearchAdminController(IAppRepository repository):Controlle
         if(!directionOk)ModelState.AddModelError("","BUY requires Stop < Entry < Target; SELL requires Target < Entry < Stop.");
         if(model.RewardRiskRatio<1)ModelState.AddModelError("","Reward-risk ratio must be at least 1:1.");
         if(!ModelState.IsValid)return View(model);
+        if (!model.AiNewsSummary.StartsWith("[AI RESEARCH]", StringComparison.Ordinal))
+            model.AiNewsSummary = $"[AI RESEARCH] Generated research brief\n\n{model.AiNewsSummary.Trim()}";
         await repository.AddSignalAsync(model);TempData["Success"]="Research signal published.";return RedirectToAction(nameof(Index));
     }
 }

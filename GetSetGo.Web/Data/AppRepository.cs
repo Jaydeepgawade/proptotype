@@ -7,6 +7,10 @@ public interface IAppRepository
 {
     Task<AppUser?> FindUserAsync(string email);
     Task<RiskProfile?> GetRiskProfileAsync(int userId);
+    Task<RiskProfile?> GetRiskProfileAsync(int userId, TradingStyle style);
+    Task<IReadOnlyList<RiskProfile>> GetRiskProfilesAsync(int userId);
+    Task<decimal> GetAccountCapitalAsync(int userId);
+    Task SaveRiskSetupAsync(int userId, decimal totalCapital, IEnumerable<RiskProfile> profiles);
     Task UpsertRiskProfileAsync(RiskProfile profile);
     Task<IReadOnlyList<ResearchSignal>> GetMatchingSignalsAsync(int userId);
     Task<IReadOnlyList<ResearchSignal>> GetAllSignalsAsync();
@@ -43,12 +47,58 @@ public sealed class AppRepository(ISqlConnectionFactory factory) : IAppRepositor
         return await r.ReadAsync() ? ReadRisk(r) : null;
     }
 
+    public async Task<RiskProfile?> GetRiskProfileAsync(int userId, TradingStyle style)
+    {
+        await using var c = factory.Create(); await c.OpenAsync(); await using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT TOP 1 Id,UserId,Capital,TradingStyle,RiskPerTradePercent,MaxTotalRiskPercent,MinimumRewardRiskRatio,IsActive FROM RiskProfiles WHERE UserId=@UserId AND TradingStyle=@Style AND IsActive=1";
+        Add(cmd, "@UserId", userId); Add(cmd, "@Style", (int)style);
+        await using var r = await cmd.ExecuteReaderAsync(); return await r.ReadAsync() ? ReadRisk(r) : null;
+    }
+
+    public async Task<IReadOnlyList<RiskProfile>> GetRiskProfilesAsync(int userId)
+    {
+        var profiles = new List<RiskProfile>(); await using var c = factory.Create(); await c.OpenAsync(); await using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT Id,UserId,Capital,TradingStyle,RiskPerTradePercent,MaxTotalRiskPercent,MinimumRewardRiskRatio,IsActive FROM RiskProfiles WHERE UserId=@UserId AND IsActive=1 ORDER BY TradingStyle";
+        Add(cmd, "@UserId", userId); await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync()) profiles.Add(ReadRisk(r)); return profiles;
+    }
+
+    public async Task<decimal> GetAccountCapitalAsync(int userId)
+    {
+        await using var c = factory.Create(); await c.OpenAsync(); await using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT COALESCE((SELECT Capital FROM TradingAccounts WHERE UserId=@UserId), 0)";
+        Add(cmd, "@UserId", userId); return Convert.ToDecimal(await cmd.ExecuteScalarAsync());
+    }
+
+    public async Task SaveRiskSetupAsync(int userId, decimal totalCapital, IEnumerable<RiskProfile> profiles)
+    {
+        await using var c = factory.Create(); await c.OpenAsync(); await using var transaction = (SqlTransaction)await c.BeginTransactionAsync();
+        try
+        {
+            await using (var account = c.CreateCommand())
+            {
+                account.Transaction = transaction;
+                account.CommandText = "MERGE TradingAccounts AS t USING (SELECT @UserId UserId) AS s ON t.UserId=s.UserId WHEN MATCHED THEN UPDATE SET Capital=@Capital,UpdatedUtc=SYSUTCDATETIME() WHEN NOT MATCHED THEN INSERT(UserId,Capital) VALUES(@UserId,@Capital);";
+                Add(account, "@UserId", userId); Add(account, "@Capital", totalCapital); await account.ExecuteNonQueryAsync();
+            }
+            foreach (var profile in profiles)
+            {
+                await using var command = c.CreateCommand(); command.Transaction = transaction;
+                command.CommandText = "MERGE RiskProfiles AS t USING (SELECT @UserId UserId,@Style TradingStyle) AS s ON t.UserId=s.UserId AND t.TradingStyle=s.TradingStyle WHEN MATCHED THEN UPDATE SET Capital=@Capital,RiskPerTradePercent=@Risk,MaxTotalRiskPercent=@MaxRisk,MinimumRewardRiskRatio=@Ratio,IsActive=1,UpdatedUtc=SYSUTCDATETIME() WHEN NOT MATCHED THEN INSERT(UserId,Capital,TradingStyle,RiskPerTradePercent,MaxTotalRiskPercent,MinimumRewardRiskRatio,IsActive) VALUES(@UserId,@Capital,@Style,@Risk,@MaxRisk,@Ratio,1);";
+                Add(command, "@UserId", userId); Add(command, "@Capital", profile.Capital); Add(command, "@Style", (int)profile.TradingStyle);
+                Add(command, "@Risk", profile.RiskPerTradePercent); Add(command, "@MaxRisk", profile.MaxTotalRiskPercent); Add(command, "@Ratio", profile.MinimumRewardRiskRatio);
+                await command.ExecuteNonQueryAsync();
+            }
+            await transaction.CommitAsync();
+        }
+        catch { await transaction.RollbackAsync(); throw; }
+    }
+
     public async Task UpsertRiskProfileAsync(RiskProfile p)
     {
         await using var c = factory.Create(); await c.OpenAsync();
         await using var cmd = c.CreateCommand();
         cmd.CommandText = """
-            UPDATE RiskProfiles SET IsActive=0 WHERE UserId=@UserId;
             MERGE RiskProfiles AS t USING (SELECT @UserId UserId,@Style TradingStyle) AS s
             ON t.UserId=s.UserId AND t.TradingStyle=s.TradingStyle
             WHEN MATCHED THEN UPDATE SET Capital=@Capital,RiskPerTradePercent=@Risk,MaxTotalRiskPercent=@MaxRisk,MinimumRewardRiskRatio=@Ratio,IsActive=1,UpdatedUtc=SYSUTCDATETIME()
@@ -66,7 +116,7 @@ public sealed class AppRepository(ISqlConnectionFactory factory) : IAppRepositor
         await using var c=factory.Create(); await c.OpenAsync(); await using var cmd=c.CreateCommand();
         cmd.CommandText="""
             SELECT s.Id,s.Symbol,s.Side,s.TradingStyle,s.EntryPrice,s.StopLoss,s.TargetPrice,s.AiNewsSummary,s.ValidFromUtc,s.ValidUntilUtc,s.IsActive
-            FROM ResearchSignals s JOIN RiskProfiles r ON r.UserId=@UserId AND r.IsActive=1 AND r.TradingStyle=s.TradingStyle
+            FROM ResearchSignals s JOIN RiskProfiles r ON r.UserId=@UserId AND r.IsActive=1 AND r.TradingStyle=s.TradingStyle AND r.Capital>0
             WHERE s.IsActive=1 AND SYSUTCDATETIME() BETWEEN s.ValidFromUtc AND s.ValidUntilUtc
             AND (ABS(s.TargetPrice-s.EntryPrice)/NULLIF(ABS(s.EntryPrice-s.StopLoss),0)) >= r.MinimumRewardRiskRatio
             ORDER BY s.ValidUntilUtc;

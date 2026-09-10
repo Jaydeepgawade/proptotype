@@ -1,14 +1,22 @@
-@model IReadOnlyList<ResearchSignal>
+@model SignalListViewModel
 @using System.Globalization
 @{ViewData["Title"]="GET signals";}
-<div class="page-head"><div><h1>Research selected for you</h1><p>Active signals matching your style and reward-risk rules.</p></div><a class="btn secondary" asp-controller="Risk" asp-action="Index">Edit risk setup</a></div>
+<div class="page-head"><div><div class="eyebrow">STEP 2</div><h1>Research selected for you</h1><p>Active signals matching your style and reward-risk rules.</p></div><a class="btn secondary" asp-controller="Risk" asp-action="Index">Edit risk setup</a></div>
 <section class="record-list card" data-record-list aria-label="Matching signals"><div class="record-scroll" tabindex="0" role="region" aria-label="Matching signals table">
 <table class="record-table"><thead><tr><th>Stock / research</th><th data-filter="Style">Style</th><th data-filter="Side">Side</th><th class="numeric" data-type="number">Entry</th><th class="numeric" data-type="number">Stop-loss</th><th class="numeric" data-type="number">Target</th><th class="numeric" data-type="number">R:R</th><th data-type="date">Valid until (UTC)</th><th data-no-sort class="record-action">Review</th></tr></thead><tbody>
-@foreach(var s in Model)
+@foreach(var s in Model.Signals)
 {
-<tr><td><strong>@s.Symbol</strong><details class="record-note"><summary>Research note</summary><p>@s.AiNewsSummary</p></details></td><td>@(s.TradingStyle == TradingStyle.ShortTermDelivery ? "Short-term delivery" : s.TradingStyle.ToString())</td><td><span class="badge @s.Side.ToString().ToLowerInvariant()">@s.Side</span></td>
+<tr data-signal-id="@s.Id"><td><strong>@s.Symbol</strong><details class="record-note"><summary>News &amp; research</summary><p>@s.AiNewsSummary</p></details></td><td><span class="style-badge style-@s.TradingStyle.ToString().ToLowerInvariant()">@(s.TradingStyle == TradingStyle.ShortTermDelivery ? "Short-term delivery" : s.TradingStyle.ToString())</span></td><td><span class="badge @s.Side.ToString().ToLowerInvariant()">@s.Side</span></td>
 <td class="numeric" data-sort="@s.EntryPrice.ToString(CultureInfo.InvariantCulture)">&#8377;@s.EntryPrice.ToString("N2")</td><td class="numeric" data-sort="@s.StopLoss.ToString(CultureInfo.InvariantCulture)">&#8377;@s.StopLoss.ToString("N2")</td><td class="numeric" data-sort="@s.TargetPrice.ToString(CultureInfo.InvariantCulture)">&#8377;@s.TargetPrice.ToString("N2")</td><td class="numeric" data-sort="@s.RewardRiskRatio.ToString(CultureInfo.InvariantCulture)">@s.RewardRiskRatio : 1</td><td data-sort="@s.ValidUntilUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@s.ValidUntilUtc.ToString("dd MMM yyyy")<small>@s.ValidUntilUtc.ToString("HH:mm")</small></td>
-<td class="record-action"><div class="record-buttons"><button type="button" class="btn secondary show-chart" data-symbol="@s.Symbol" data-entry="@s.EntryPrice.ToString(CultureInfo.InvariantCulture)" data-stop="@s.StopLoss.ToString(CultureInfo.InvariantCulture)" data-target="@s.TargetPrice.ToString(CultureInfo.InvariantCulture)">Chart<span class="sr-only"> for @s.Symbol</span></button><form asp-action="Set" method="post" class="api-action" data-api="/api/v1/signals/@s.Id/set" data-redirect="/Orders/Set" data-confirm="SET this signal using your saved risk rules?"><input type="hidden" name="id" value="@s.Id"/><button class="btn primary" type="submit">SET<span class="sr-only"> @s.Symbol</span></button></form></div></td></tr>
+<td class="record-action"><div class="record-buttons"><button type="button" class="btn secondary show-chart" data-symbol="@s.Symbol" data-entry="@s.EntryPrice.ToString(CultureInfo.InvariantCulture)" data-stop="@s.StopLoss.ToString(CultureInfo.InvariantCulture)" data-target="@s.TargetPrice.ToString(CultureInfo.InvariantCulture)">Chart<span class="sr-only"> for @s.Symbol</span></button>@if (Model.ActiveOrderStatuses.TryGetValue(s.Id, out var activeStatus))
+{
+    <button type="button" class="btn order-unavailable" disabled title="An active order already exists for this signal.">@(activeStatus == OrderStatus.Executed ? "Executed" : "Already SET")</button>
+}
+else
+{
+<form asp-action="Set" method="post" class="api-action" data-api="/api/v1/signals/@s.Id/set" data-redirect="/Orders/Set" data-confirm="SET this signal using your saved risk rules?"><input type="hidden" name="id" value="@s.Id"/><button class="btn primary" type="submit">SET<span class="sr-only"> @s.Symbol</span></button></form>
+}
+</div></td></tr>
 }
 </tbody></table></div></section>
 <dialog id="chartDialog" class="chart-dialog"><div class="chart-head"><div><div class="eyebrow">DEMO OHLC · 1 DAY</div><h2 id="chartTitle">Price chart</h2></div><button type="button" class="chart-close" aria-label="Close">×</button></div><div class="chart-legend"><span><i class="entry-dot"></i>Entry</span><span><i class="stop-dot"></i>Stop-loss</span><span><i class="target-dot"></i>Target</span><b>Sample data—not live market prices</b></div><div id="priceChart"></div><div id="chartError" class="validation"></div></dialog>

@@ -30,7 +30,7 @@
                     <a asp-controller="Signals" asp-action="Index" class="@(activeNav == "Signals" ? "active" : null)" aria-current="@(activeNav == "Signals" ? "page" : null)">GET</a>
                     <a asp-controller="Orders" asp-action="Set" class="@(activeNav == "Set" ? "active" : null)" aria-current="@(activeNav == "Set" ? "page" : null)">SET</a>
                     <a asp-controller="Orders" asp-action="Tracker" class="@(activeNav == "Tracker" ? "active" : null)" aria-current="@(activeNav == "Tracker" ? "page" : null)">Go\Tracker</a>
-                    <a asp-controller="Dashboard" asp-action="Index" class="@(activeNav == "Dashboard" ? "active" : null)" aria-current="@(activeNav == "Dashboard" ? "page" : null)">Overview</a>
+                    <a asp-controller="Orders" asp-action="History" class="@(activeNav == "History" ? "active" : null)" aria-current="@(activeNav == "History" ? "page" : null)">History</a>
                 }
                 else { <a asp-controller="ResearchAdmin" asp-action="Index" class="@(activeNav == "ResearchAdmin" ? "active" : null)" aria-current="@(activeNav == "ResearchAdmin" ? "page" : null)">Research desk</a> }
             </nav>

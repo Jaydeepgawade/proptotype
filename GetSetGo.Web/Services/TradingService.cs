@@ -13,12 +13,12 @@ public sealed class TradingService(IAppRepository repository) : ITradingService
 {
     public async Task<(bool Ok,string Message,int? OrderId)> SetOrderAsync(int userId,int signalId)
     {
-        var risk=await repository.GetRiskProfileAsync(userId);
-        if(risk is null) return(false,"Complete your Risk Setup first.",null);
         var signal=await repository.GetSignalAsync(signalId);
         if(signal is null || !signal.IsActive || DateTime.UtcNow<signal.ValidFromUtc || DateTime.UtcNow>signal.ValidUntilUtc)
             return(false,"This signal is unavailable or expired.",null);
-        if(signal.TradingStyle!=risk.TradingStyle || signal.RewardRiskRatio<risk.MinimumRewardRiskRatio)
+        var risk=await repository.GetRiskProfileAsync(userId, signal.TradingStyle);
+        if(risk is null || risk.Capital < 1000) return(false,$"Set a capital allocation for {signal.TradingStyle} first.",null);
+        if(signal.RewardRiskRatio<risk.MinimumRewardRiskRatio)
             return(false,"This signal does not match your risk profile.",null);
         if(await repository.HasActiveOrderAsync(userId,signalId)) return(false,"You have already set this signal.",null);
 
@@ -28,7 +28,22 @@ public sealed class TradingService(IAppRepository repository) : ITradingService
         var quantity=(int)Math.Floor(allowedRisk/perShareRisk);
         if(quantity<1) return(false,"Your capital/risk limit is too low for one share.",null);
         var actualRisk=quantity*perShareRisk;
-        var activeRisk=await repository.GetActiveRiskAsync(userId);
+        var orderValue=quantity*signal.EntryPrice;
+        var activeOrders=await repository.GetOrdersAsync(userId);
+        var reservedCapital=activeOrders
+            .Where(order => order.Status is OrderStatus.Set or OrderStatus.Executed)
+            .Sum(order => order.EntryPrice*order.Quantity);
+        var styleReservedCapital=activeOrders
+            .Where(order => (order.Status is OrderStatus.Set or OrderStatus.Executed) && order.TradingStyle == signal.TradingStyle)
+            .Sum(order => order.EntryPrice*order.Quantity);
+        var availableStyleCapital=risk.Capital-styleReservedCapital;
+        if(orderValue>availableStyleCapital)
+            return(false,$"Insufficient {signal.TradingStyle} capital. This order requires ₹{orderValue:N2}; ₹{Math.Max(0, availableStyleCapital):N2} is available.",null);
+        var accountCapital=await repository.GetAccountCapitalAsync(userId);
+        var availableCapital=accountCapital-reservedCapital;
+        if(orderValue>availableCapital)
+            return(false,$"Insufficient combined account capital. This order requires ₹{orderValue:N2}; ₹{Math.Max(0, availableCapital):N2} is available.",null);
+        var activeRisk=activeOrders.Where(order => (order.Status is OrderStatus.Set or OrderStatus.Executed) && order.TradingStyle == signal.TradingStyle).Sum(order => order.RiskAmount);
         var maxRisk=risk.Capital*risk.MaxTotalRiskPercent/100m;
         if(activeRisk+actualRisk>maxRisk) return(false,$"Maximum active-risk limit reached (₹{maxRisk:N2}).",null);
 

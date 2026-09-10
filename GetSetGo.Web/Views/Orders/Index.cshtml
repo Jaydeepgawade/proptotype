@@ -1,29 +1,48 @@
 @model OrderListViewModel
 @using System.Globalization
-@{ ViewData["Title"] = Model.Section == "SET" ? "Prepared orders" : Model.Section == "GO" ? "Open trades" : "Order tracker"; }
-<div class="page-head"><div><h1>@ViewData["Title"]</h1><p>@(Model.Section == "SET" ? "Review pending orders before execution." : Model.Section == "GO" ? "Your executed simulated trades." : "All your orders, with their original order IDs and latest status.")</p></div></div>
-<section class="record-list card" aria-label="@ViewData["Title"]" data-record-list>
+@{
+    var isAuditSection = Model.Section is "Tracker" or "History";
+    var totalQuantity = Model.Orders.Sum(o => o.Quantity);
+    var totalValue = Model.Orders.Sum(o => o.EntryPrice * o.Quantity);
+    var completedCount = Model.Orders.Count(o => o.Status is OrderStatus.Executed or OrderStatus.Closed);
+    var inactiveCount = Model.Orders.Count(o => o.Status is OrderStatus.Cancelled or OrderStatus.Expired);
+    var step = Model.Section == "SET" ? "STEP 3" : Model.Section == "GO" ? "STEP 4" : Model.Section == "Tracker" ? "STEP 5" : "STEP 6";
+    ViewData["Title"] = Model.Section == "SET" ? "Prepared orders" : Model.Section == "GO" ? "Open trades" : Model.Section == "History" ? "Order history" : "Order tracker";
+}
+<div class="page-head"><div><div class="eyebrow">@step</div><h1>@ViewData["Title"]</h1><p>@(Model.Section == "SET" ? "Review pending orders before execution." : Model.Section == "GO" ? "Your executed simulated trades." : Model.Section == "History" ? "Executed, cancelled, expired and closed orders." : "Executed orders, with their original order IDs and latest status.")</p></div></div>
+<section class="metrics order-metrics @(Model.Section == "History" ? "history-metrics" : null)" aria-label="Order totals">
+    <div class="metric"><span>Total orders</span><strong>@Model.Orders.Count</strong><small>Records in this section</small></div>
+    <div class="metric"><span>Total quantity</span><strong>@totalQuantity.ToString("N0")</strong><small>Shares across these orders</small></div>
+    <div class="metric"><span>Total value</span><strong>&#8377;@totalValue.ToString("N2")</strong><small>Entry value of these orders</small></div>
+    @if (Model.Section == "History")
+    {
+        <div class="metric"><span>Completed</span><strong>@completedCount</strong><small>Executed or closed orders</small></div>
+        <div class="metric"><span>Cancelled / expired</span><strong>@inactiveCount</strong><small>Orders that did not execute</small></div>
+    }
+</section>
+<section class="record-list card" aria-label="@ViewData["Title"]" data-record-list @(Model.Section == "History" ? "data-export-name=order-history" : null)>
 <div class="record-scroll" tabindex="0" role="region" aria-label="Orders table, scroll horizontally for more columns">
 <table class="record-table"><thead><tr>
 <th data-type="number">Order</th><th>Stock</th><th data-filter="Style">Style</th><th data-filter="Side">Side</th><th data-type="number" class="numeric">Quantity / value</th><th data-type="number" class="numeric">Entry / SL / target</th><th data-type="number" class="numeric">Risk</th><th data-type="date">Valid until (UTC)</th>
-@if (Model.Section == "Tracker") { <th data-type="date">Created (UTC)</th> }
+@if (Model.Section == "History") { <th data-type="date" data-date-filter="Created date">Created (UTC)</th> }
+else if (isAuditSection) { <th data-type="date">Created (UTC)</th> }
 @if (Model.Section != "SET") { <th data-type="date">Executed (UTC)</th> }
-@if (Model.Section == "Tracker") { <th data-filter="Status">Status</th> }
+@if (isAuditSection) { <th data-filter="Status">Status</th> }
 <th data-no-sort class="record-action">Details</th></tr></thead><tbody>
 @foreach (var o in Model.Orders)
 {
 <tr>
 <td data-sort="@o.Id"><span class="order-number">#@o.Id</span></td>
 <td><strong>@o.Symbol</strong></td>
-<td>@(o.TradingStyle == TradingStyle.ShortTermDelivery ? "Short-term delivery" : o.TradingStyle?.ToString() ?? "Unavailable")</td>
+<td><span class="style-badge style-@(o.TradingStyle?.ToString().ToLowerInvariant() ?? "unknown")">@(o.TradingStyle == TradingStyle.ShortTermDelivery ? "Short-term delivery" : o.TradingStyle?.ToString() ?? "Unavailable")</span></td>
 <td><span class="badge @o.Side.ToString().ToLowerInvariant()">@o.Side</span></td>
 <td class="numeric" data-sort="@o.Quantity"><strong>@o.Quantity shares</strong><small>&#8377;@((o.EntryPrice * o.Quantity).ToString("N2"))</small></td>
 <td class="numeric" data-sort="@o.EntryPrice.ToString(CultureInfo.InvariantCulture)"><strong>&#8377;@o.EntryPrice.ToString("N2")</strong><small>SL @o.StopLoss.ToString("N2")</small><small>T @o.TargetPrice.ToString("N2")</small></td>
 <td class="numeric" data-sort="@o.RiskAmount.ToString(CultureInfo.InvariantCulture)">&#8377;@o.RiskAmount.ToString("N2")</td>
 <td data-sort="@o.ValidUntilUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@o.ValidUntilUtc.ToString("dd MMM yyyy")<small>@o.ValidUntilUtc.ToString("HH:mm")</small></td>
-@if (Model.Section == "Tracker") { <td data-sort="@o.CreatedUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@o.CreatedUtc.ToString("dd MMM yyyy")<small>@o.CreatedUtc.ToString("HH:mm")</small></td> }
+@if (isAuditSection) { <td data-sort="@o.CreatedUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@o.CreatedUtc.ToString("dd MMM yyyy")<small>@o.CreatedUtc.ToString("HH:mm")</small></td> }
 @if (Model.Section != "SET") { <td data-sort="@(o.ExecutedUtc?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "")">@(o.ExecutedUtc?.ToString("dd MMM yyyy") ?? "Not executed")<small>@o.ExecutedUtc?.ToString("HH:mm")</small></td> }
-@if (Model.Section == "Tracker") { <td><span class="status @o.Status.ToString().ToLowerInvariant()">@o.Status</span></td> }
+@if (isAuditSection) { <td><span class="status @o.Status.ToString().ToLowerInvariant()">@o.Status</span></td> }
 <td class="record-action"><a class="btn secondary" asp-action="Trade" asp-route-id="@o.Id" asp-route-section="@Model.Section">@(Model.Section == "SET" ? "SET" : "View")<span class="sr-only"> order #@o.Id</span></a></td>
 </tr>
 }

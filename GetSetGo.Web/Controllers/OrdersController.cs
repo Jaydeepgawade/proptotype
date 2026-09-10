@@ -12,7 +12,14 @@ public sealed class OrdersController(IAppRepository repository, ITradingService 
     public IActionResult Index() => RedirectToAction(nameof(Set));
     [HttpGet] public Task<IActionResult> Set() => List("SET", OrderStatus.Set);
     [HttpGet] public Task<IActionResult> Go() => List("GO", OrderStatus.Executed);
-    [HttpGet] public Task<IActionResult> Tracker() => List("Tracker", null);
+    [HttpGet] public Task<IActionResult> Tracker() => List("Tracker", OrderStatus.Executed);
+    [HttpGet]
+    public async Task<IActionResult> History()
+    {
+        var orders = await repository.GetOrdersAsync(User.UserId());
+        return View("Index", new OrderListViewModel("History",
+            orders.Where(o => o.Status != OrderStatus.Set).ToArray()));
+    }
 
     private async Task<IActionResult> List(string section, OrderStatus? status)
     {
@@ -28,7 +35,7 @@ public sealed class OrdersController(IAppRepository repository, ITradingService 
         var orders = await repository.GetOrdersAsync(User.UserId());
         var order = orders.FirstOrDefault(o => o.Id == id);
         if (order is null) return NotFound();
-        ViewData["ActiveNav"] = section == "Tracker" ? "Tracker" : order.Status == OrderStatus.Set ? "Set" : order.Status == OrderStatus.Executed ? "Go" : "Tracker";
+        ViewData["ActiveNav"] = section == "History" ? "History" : section == "Tracker" ? "Tracker" : order.Status == OrderStatus.Set ? "Set" : order.Status == OrderStatus.Executed ? "Go" : "Tracker";
         return View(new OrderDetailsViewModel(order, await repository.GetSignalAsync(order.SignalId)));
     }
 

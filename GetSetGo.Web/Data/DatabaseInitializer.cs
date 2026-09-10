@@ -147,6 +147,13 @@ public sealed class DatabaseInitializer(IConfiguration configuration, IPasswordS
             CONSTRAINT FK_RiskProfiles_Users FOREIGN KEY(UserId) REFERENCES AppUsers(Id),
             CONSTRAINT UQ_RiskProfiles_UserStyle UNIQUE(UserId, TradingStyle));
 
+        IF OBJECT_ID('TradingAccounts') IS NULL
+        CREATE TABLE TradingAccounts (
+            UserId INT NOT NULL PRIMARY KEY,
+            Capital DECIMAL(18,2) NOT NULL,
+            UpdatedUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            CONSTRAINT FK_TradingAccounts_Users FOREIGN KEY(UserId) REFERENCES AppUsers(Id));
+
         IF OBJECT_ID('ResearchSignals') IS NULL
         CREATE TABLE ResearchSignals (
             Id INT IDENTITY PRIMARY KEY, Symbol NVARCHAR(30) NOT NULL, Side INT NOT NULL,

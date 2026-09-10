@@ -15,16 +15,30 @@ public sealed class AppUser
     public string Role { get; set; } = "Client";
 }
 
-public sealed class RiskProfile
+public sealed class RiskProfile : IValidatableObject
 {
     public int Id { get; set; }
     public int UserId { get; set; }
-    [Range(1000, 100000000)] public decimal Capital { get; set; }
+    [Range(0, 100000000)] public decimal Capital { get; set; }
     [Required] public TradingStyle TradingStyle { get; set; }
     [Range(0.1, 5)] public decimal RiskPerTradePercent { get; set; } = 1;
     [Range(0.1, 5)] public decimal MaxTotalRiskPercent { get; set; } = 3;
     [Range(1, 5)] public decimal MinimumRewardRiskRatio { get; set; } = 1;
     public bool IsActive { get; set; } = true;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if(RiskPerTradePercent > MaxTotalRiskPercent)
+        {
+            yield return new ValidationResult("Risk per trade cannot be greater than Maximum total Risk", new[] { nameof(RiskPerTradePercent) });
+        }
+    }
+}
+
+public sealed class RiskSetupViewModel
+{
+    [Range(1000, 100000000)] public decimal TotalCapital { get; set; }
+    public List<RiskProfile> Profiles { get; set; } = [];
 }
 
 public sealed class ResearchSignal
