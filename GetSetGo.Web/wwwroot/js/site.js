@@ -1,10 +1,28 @@
-$(function(){
+﻿$(function(){
   $('.nav-toggle').on('click',function(){$('.topbar nav').toggleClass('open');});
   const money=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n)||0);
   function updateRisk(){const capital=$('#Capital').val();const each=$('#RiskPerTradePercent').val();const max=$('#MaxTotalRiskPercent').val();$('#riskAmount').text(money(capital*each/100));$('#maxRiskAmount').text(money(capital*max/100));}
   $('#Capital,#RiskPerTradePercent,#MaxTotalRiskPercent').on('input',updateRisk);updateRisk();
   $('#MinimumRewardRiskRatio').on('input',function(){$('#ratioOutput').text($(this).val()+':1');});
   let activeChart=null,chartResize=null;
+  const levelMoney=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(Number(value)||0);
+  function orderLevels(source){
+    return [
+      {price:Number(source.data('entry')),color:'#0b5cab',title:'ENTRY'},
+      {price:Number(source.data('stop')),color:'#c43f4b',title:'STOP-LOSS'},
+      {price:Number(source.data('target')),color:'#11855b',title:'TARGET'}
+    ].filter(line=>Number.isFinite(line.price)&&line.price>0);
+  }
+  function addOrderLevelLines(series,levels){
+    levels.forEach(line=>series.createPriceLine({
+      price:line.price,
+      color:line.color,
+      lineWidth:2,
+      lineStyle:LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible:true,
+      title:line.title+' '+levelMoney(line.price)
+    }));
+  }
   $('.show-chart').on('click',function(){
     const button=$(this),dialog=document.getElementById('chartDialog'),container=document.getElementById('priceChart');
     const symbol=button.data('symbol');
@@ -19,7 +37,9 @@ $(function(){
         candleSeries.setData(response.candles.map(c=>({time:c.timeUtc.slice(0,10),open:c.open,high:c.high,low:c.low,close:c.close})));
         volumeSeries.setData(response.candles.map(c=>({time:c.timeUtc.slice(0,10),value:c.volume,color:c.close>=c.open?'#11855b55':'#c43f4b55'})));
         volumeSeries.priceScale().applyOptions({scaleMargins:{top:.82,bottom:0}});
-        [{price:Number(button.data('entry')),color:'#0b5cab',title:'ENTRY'}, {price:Number(button.data('stop')),color:'#c43f4b',title:'STOP'}, {price:Number(button.data('target')),color:'#11855b',title:'TARGET'}].forEach(line=>candleSeries.createPriceLine({price:line.price,color:line.color,lineWidth:2,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,title:line.title}));
+        const levels=orderLevels(button);
+        addOrderLevelLines(candleSeries,levels);
+        candleSeries.applyOptions({autoscaleInfoProvider:original=>{const info=original();if(!info||!levels.length)return info;const prices=levels.map(line=>line.price);return {...info,priceRange:{minValue:Math.min(info.priceRange.minValue,...prices),maxValue:Math.max(info.priceRange.maxValue,...prices)}};}});
         activeChart.timeScale().fitContent();
         chartResize=new ResizeObserver(entries=>{if(activeChart)activeChart.applyOptions({width:entries[0].contentRect.width,height:window.innerWidth<600?390:500});});chartResize.observe(container);
       })
@@ -66,3 +86,16 @@ $(function(){
   if(apiMessage){sessionStorage.removeItem('apiMessage');$('.shell').prepend($('<div class="alert success">').text(apiMessage));}
   window.setTimeout(()=>$('.alert').fadeOut(),4500);
 });
+
+
+
+
+(() => {
+  const button = document.querySelector('[data-back-to-top]');
+  if (!button) return;
+
+  const toggle = () => button.classList.toggle('visible', window.scrollY > 280);
+  button.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  window.addEventListener('scroll', toggle, { passive: true });
+  toggle();
+})();

@@ -48,11 +48,19 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
     });
 builder.Services.AddAuthorization();
+// Flutter web uses explicit origins with the existing session + anti-forgery flow.
+builder.Services.AddCors(options => options.AddPolicy("FlutterClient", policy =>
+{
+    var origins = builder.Configuration.GetSection("Flutter:AllowedOrigins").Get<string[]>()
+        ?? (builder.Environment.IsDevelopment() ? new[] { "http://localhost:5173", "http://127.0.0.1:5173" } : Array.Empty<string>());
+    if (origins.Length > 0) policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+}));
 builder.Services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<IAppRepository, AppRepository>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<ITradingService, TradingService>();
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<ResearchAudienceService>();
 
 var app = builder.Build();
 
@@ -99,9 +107,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!(app.Environment.IsDevelopment() && app.Configuration.GetValue<bool>("Flutter:AllowHttpDevelopment"))) app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("FlutterClient");
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -25,6 +25,7 @@ public sealed class AccountController(IAppRepository repository,IPasswordService
         }
         var claims=new[]{new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),new Claim(ClaimTypes.Name,user.FullName),new Claim(ClaimTypes.Email,user.Email),new Claim(ClaimTypes.Role,user.Role)};
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,new ClaimsPrincipal(new ClaimsIdentity(claims,CookieAuthenticationDefaults.AuthenticationScheme)));
+        if (user.Role == "Client") return RedirectToAction("Index", "Risk");
         if(!string.IsNullOrWhiteSpace(model.ReturnUrl)&&Url.IsLocalUrl(model.ReturnUrl))return LocalRedirect(model.ReturnUrl);
         if (user.Role == "Admin") return RedirectToAction("Index", "ResearchAdmin");
         return RedirectToAction("Index","Dashboard");
