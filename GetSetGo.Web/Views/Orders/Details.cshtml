@@ -21,7 +21,7 @@
         <div><dt>Target</dt><dd>&#8377;@order.TargetPrice.ToString("N2")</dd></div>
         <div><dt>Risk per share</dt><dd>&#8377;@Model.PerShareRisk.ToString("N2")</dd></div>
         <div><dt>Total order risk</dt><dd>&#8377;@order.RiskAmount.ToString("N2")</dd></div>
-        <div><dt>Reward / risk</dt><dd>@Model.RewardRiskRatio.ToString("N2") : 1</dd></div>
+        <div><dt>Reward / risk</dt><dd>@Math.Round(Model.RewardRiskRatio, MidpointRounding.AwayFromZero).ToString("0") : 1</dd></div>
     </dl></section>
     <section class="card form-card"><h2>Dates and execution</h2><dl class="order-facts">
         <div><dt>Created (UTC)</dt><dd>@order.CreatedUtc.ToString("dd MMM yyyy, HH:mm:ss")</dd></div>

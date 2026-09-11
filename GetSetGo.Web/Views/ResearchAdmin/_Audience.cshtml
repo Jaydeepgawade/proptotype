@@ -2,5 +2,6 @@
     <h2>Eligible clients</h2>
     <p class="muted">Clients whose saved style and minimum reward : risk match this call. Delivery requires an active call within its validity; SET capital checks remain separate.</p>
     <p data-audience-status role="status">Enter price levels to check eligibility.</p>
-    <details><summary>View eligible clients</summary><div class="table-wrap" style="max-height:320px;overflow:auto"><table><thead><tr><th>Name</th><th>Email</th><th>Style</th><th>Capital</th><th>Minimum R:R</th></tr></thead><tbody data-audience-rows></tbody></table></div></details>   
+    <details><summary>View eligible clients</summary><div class="table-wrap" style="max-height:320px;overflow:auto"><table><thead><tr><th>Name</th><th>Email</th><th>Style</th><th>Capital</th><th>Minimum R:R</th></tr></thead><tbody data-audience-rows></tbody></table></div></details>
+    <form asp-controller="ResearchAudience" asp-action="Seed" method="post"><button class="btn secondary" type="submit">Prepare 200 demo clients</button><small>Creates demo fixtures once: 50 per style, ratios from 1:1 to 5:1. Includes 3.1:1 and 4.5:1.</small></form>
 </section>

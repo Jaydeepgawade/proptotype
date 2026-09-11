@@ -32,7 +32,7 @@
             <div><dt>Entry value</dt><dd>&#8377;@Model.OrderValue.ToString("N2")</dd></div>
             <div><dt>Risk per share</dt><dd>&#8377;@Model.PerShareRisk.ToString("N2")</dd></div>
             <div><dt>Potential reward at target</dt><dd>&#8377;@((Math.Abs(order.TargetPrice - order.EntryPrice) * order.Quantity).ToString("N2"))</dd></div>
-            <div><dt>Reward / risk</dt><dd>@Model.RewardRiskRatio.ToString("N2") : 1</dd></div>
+            <div><dt>Reward / risk</dt><dd>@Math.Round(Model.RewardRiskRatio, MidpointRounding.AwayFromZero).ToString("0") : 1</dd></div>
             <div><dt>Valid until (UTC)</dt><dd>@order.ValidUntilUtc.ToString("dd MMM yyyy, HH:mm")</dd></div>
         </dl>
         <div class="trade-risk"><span>Planned risk at stop-loss</span><strong>&#8377;@order.RiskAmount.ToString("N2")</strong><small>@order.Quantity shares &times; &#8377;@Model.PerShareRisk.ToString("N2") per-share risk.</small></div>
