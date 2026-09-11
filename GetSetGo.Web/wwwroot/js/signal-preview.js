@@ -8,6 +8,10 @@
   const money = value => '₹' + (Number(value) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const customRatio = document.querySelector('[data-custom-ratio]');
   const roundPrice = value => Math.round(value * 100) / 100;
+  const formatRatio = value => {
+    const rounded = Math.round(Number(value) || 0);
+    return rounded > 0 ? Math.min(5, rounded) + ':1' : '—';
+  };
 
   function getEntryRange() {
     const from = Number(entryFrom?.value) || 0;
@@ -65,7 +69,7 @@
     const target = Number(input('target').value) || 0;
     const risk = Math.abs(entry - stop);
     const reward = Math.abs(target - entry);
-    const ratioText = risk > 0 && reward > 0 ? Math.round(reward / risk) + ':1' : '—';
+    const ratioText = risk > 0 && reward > 0 ? formatRatio(reward / risk) : '—';
 
     document.querySelector('[data-preview-symbol]').textContent = symbol;
     document.querySelector('[data-preview-side]').textContent = side;
@@ -141,7 +145,7 @@
       document.querySelector('[data-preview-entry]').textContent = money(firstCall.entry);
       document.querySelector('[data-preview-stop]').textContent = money(firstCall.stop_loss);
       document.querySelector('[data-preview-target]').textContent = money(firstCall.target);
-      document.querySelector('[data-preview-ratio]').textContent = Math.round(Number(firstCall.risk_reward_ratio || 0)) + ':1';
+      document.querySelector('[data-preview-ratio]').textContent = formatRatio(firstCall.risk_reward_ratio);
       document.querySelector('[data-preview-brief]').textContent = firstNews.headline || 'AI research setup prepared for BEL';
 
       grid.innerHTML = stocks.map((stock, index) => {
@@ -149,7 +153,7 @@
         const news = stock.news || {};
         const style = stock.research_style?.style || 'INTRADAY';
         const side = call.side || 'BUY';
-        return '<article class="demo-signal-card card"><div><span class="style-badge style-' + style.toLowerCase().replaceAll('_', '') + '">' + escape(style.replaceAll('_', ' ')) + '</span><span class="badge ' + side.toLowerCase() + '">' + escape(side) + '</span></div><h3>' + escape(stock.symbol) + '</h3><p class="demo-headline">' + escape(news.headline || 'AI research setup') + '</p><div class="demo-levels"><span>Entry <b>₹' + Number(call.entry).toFixed(2) + '</b></span><span>SL <b>₹' + Number(call.stop_loss).toFixed(2) + '</b></span><span>Target <b>₹' + Number(call.target).toFixed(2) + '</b></span></div><div class="ratio"><span>Score ' + Number(stock.overall_score || 0).toFixed(1) + '</span><strong>' + Math.round(Number(call.risk_reward_ratio || 0)) + ':1</strong></div><button class="btn secondary" type="button" data-demo-index="' + index + '">Use this signal</button></article>';
+        return '<article class="demo-signal-card card"><div><span class="style-badge style-' + style.toLowerCase().replaceAll('_', '') + '">' + escape(style.replaceAll('_', ' ')) + '</span><span class="badge ' + side.toLowerCase() + '">' + escape(side) + '</span></div><h3>' + escape(stock.symbol) + '</h3><p class="demo-headline">' + escape(news.headline || 'AI research setup') + '</p><div class="demo-levels"><span>Entry <b>₹' + Number(call.entry).toFixed(2) + '</b></span><span>SL <b>₹' + Number(call.stop_loss).toFixed(2) + '</b></span><span>Target <b>₹' + Number(call.target).toFixed(2) + '</b></span></div><div class="ratio"><span>Score ' + Number(stock.overall_score || 0).toFixed(1) + '</span><strong>' + formatRatio(call.risk_reward_ratio) + '</strong></div><button class="btn secondary" type="button" data-demo-index="' + index + '">Use this signal</button></article>';
       }).join('');
 
       grid.addEventListener('click', event => {
@@ -167,7 +171,7 @@
         input('stop').value = call.stop_loss ?? '';
         const cardTarget = Number(call.target);
         input('target').value = Number.isFinite(cardTarget) ? roundPrice(cardTarget + 4).toFixed(2) : '';
-        if (customRatio) customRatio.value = Number(call.risk_reward_ratio || 0).toFixed(2);
+        if (customRatio) customRatio.value = Math.min(5, Number(call.risk_reward_ratio || 0)).toFixed(2);
         input('brief').value = (news.headline || 'AI research setup') + '\n\n' + (news.content || '');
         update();
         form.scrollIntoView({ behavior: 'smooth', block: 'start' });
