@@ -3,11 +3,41 @@
   if (!form) return;
 
   const input = name => form.querySelector('[data-preview="' + name + '"]');
+  const entryFrom = form.querySelector('[data-entry-range="from"]');
+  const entryTo = form.querySelector('[data-entry-range="to"]');
   const money = value => '₹' + (Number(value) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const customRatio = document.querySelector('[data-custom-ratio]');
   const roundPrice = value => Math.round(value * 100) / 100;
 
+  function getEntryRange() {
+    const from = Number(entryFrom?.value) || 0;
+    const to = Number(entryTo?.value) || 0;
+    return { from, to };
+  }
+
+  function syncEntryFromRange() {
+    if (!entryFrom || !entryTo) return;
+    const { from, to } = getEntryRange();
+    const calculationEntry = to > 0 ? to : from;
+    input('entry').value = calculationEntry > 0 ? roundPrice(calculationEntry).toFixed(2) : '';
+  }
+
+  function setEntryRange(value, toValue = value) {
+    const price = value ?? '';
+    const endPrice = toValue ?? '';
+    if (entryFrom) entryFrom.value = price;
+    if (entryTo) entryTo.value = endPrice;
+    syncEntryFromRange();
+  }
+
+  function entryDisplay(entry) {
+    const { from, to } = getEntryRange();
+    if (from && to && from !== to) return money(Math.min(from, to)) + ' - ' + money(Math.max(from, to));
+    return money(entry);
+  }
+
   function applyCustomRatio() {
+    syncEntryFromRange();
     const ratio = Number(customRatio?.value);
     const entry = Number(input('entry')?.value) || 0;
     const stop = Number(input('stop')?.value) || 0;
@@ -23,8 +53,10 @@
     const field = input(name);
     if (field && Number(field.value) === 0) field.value = '';
   });
+  if (input('entry')?.value) setEntryRange(input('entry').value);
 
   function update() {
+    syncEntryFromRange();
     const symbol = input('symbol').value.trim().toUpperCase() || 'Enter symbol';
     const side = input('side').selectedOptions[0].text.toUpperCase();
     const style = input('style').selectedOptions[0].text;
@@ -33,7 +65,7 @@
     const target = Number(input('target').value) || 0;
     const risk = Math.abs(entry - stop);
     const reward = Math.abs(target - entry);
-    const ratioText = risk > 0 && reward > 0 ? (reward / risk).toFixed(2) + ' : 1' : '—';
+    const ratioText = risk > 0 && reward > 0 ? Math.round(reward / risk) + ':1' : '—';
 
     document.querySelector('[data-preview-symbol]').textContent = symbol;
     document.querySelector('[data-preview-side]').textContent = side;
@@ -43,7 +75,7 @@
     styleBadge.textContent = style;
     styleBadge.className = 'style-badge style-' + style.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
 
-    document.querySelector('[data-preview-entry]').textContent = money(entry);
+    document.querySelector('[data-preview-entry]').textContent = entryDisplay(entry);
     document.querySelector('[data-preview-stop]').textContent = money(stop);
     document.querySelector('[data-preview-target]').textContent = money(target);
     document.querySelector('[data-preview-ratio]').textContent = ratioText;
@@ -52,17 +84,22 @@
     const formHelp = document.querySelector('[data-form-ratio-help]');
     if (formRatio) formRatio.textContent = ratioText;
     if (formHelp) formHelp.textContent = ratioText === '—'
-      ? 'Enter entry, stop-loss and target to calculate.'
-      : 'Calculated from entry, stop-loss and target.';
+      ? 'Enter entry range, stop-loss and target to calculate.'
+      : 'Calculated from Entry To when present, otherwise Entry From.';
 
     document.querySelector('[data-preview-brief]').textContent = input('brief').value.trim() || 'Your research context will appear here.';
   }
 
   form.querySelectorAll('[data-preview]').forEach(field => field.addEventListener('input', update));
-  ['entry', 'stop'].forEach(name => input(name)?.addEventListener('input', () => {
+  [entryFrom, entryTo].forEach(field => field?.addEventListener('input', () => {
+    syncEntryFromRange();
     if (customRatio?.value) applyCustomRatio();
     update();
   }));
+  input('stop')?.addEventListener('input', () => {
+    if (customRatio?.value) applyCustomRatio();
+    update();
+  });
   input('side')?.addEventListener('change', () => {
     if (customRatio?.value) applyCustomRatio();
     update();
@@ -71,6 +108,7 @@
     applyCustomRatio();
     update();
   });
+  form.addEventListener('submit', () => syncEntryFromRange());
   update();
 
   const grid = document.querySelector('[data-demo-signal-grid]');
@@ -89,13 +127,29 @@
         grid.innerHTML = '<p class="muted">All generated research cards have already been published.</p>';
         return;
       }
+      const firstStock = stocks.find(stock => String(stock.symbol || '').toUpperCase() === 'BEL') || stocks[0];
+      const firstCall = firstStock.research_call || {};
+      const firstNews = firstStock.news || {};
+      const firstStyle = firstStock.research_style?.style || 'INTRADAY';
+      const firstSide = firstCall.side || 'BUY';
+      document.querySelector('[data-preview-symbol]').textContent = firstStock.symbol || 'BEL';
+      document.querySelector('[data-preview-side]').textContent = firstSide;
+      document.querySelector('[data-preview-side]').className = 'badge ' + firstSide.toLowerCase();
+      const firstStyleBadge = document.querySelector('[data-preview-style]');
+      firstStyleBadge.textContent = firstStyle.replaceAll('_', ' ');
+      firstStyleBadge.className = 'style-badge style-' + firstStyle.toLowerCase().replaceAll('_', '');
+      document.querySelector('[data-preview-entry]').textContent = money(firstCall.entry);
+      document.querySelector('[data-preview-stop]').textContent = money(firstCall.stop_loss);
+      document.querySelector('[data-preview-target]').textContent = money(firstCall.target);
+      document.querySelector('[data-preview-ratio]').textContent = Math.round(Number(firstCall.risk_reward_ratio || 0)) + ':1';
+      document.querySelector('[data-preview-brief]').textContent = firstNews.headline || 'AI research setup prepared for BEL';
 
       grid.innerHTML = stocks.map((stock, index) => {
         const call = stock.research_call || {};
         const news = stock.news || {};
         const style = stock.research_style?.style || 'INTRADAY';
         const side = call.side || 'BUY';
-        return '<article class="demo-signal-card card"><div><span class="style-badge style-' + style.toLowerCase().replaceAll('_', '') + '">' + escape(style.replaceAll('_', ' ')) + '</span><span class="badge ' + side.toLowerCase() + '">' + escape(side) + '</span></div><h3>' + escape(stock.symbol) + '</h3><p class="demo-headline">' + escape(news.headline || 'AI research setup') + '</p><div class="demo-levels"><span>Entry <b>₹' + Number(call.entry).toFixed(2) + '</b></span><span>SL <b>₹' + Number(call.stop_loss).toFixed(2) + '</b></span><span>Target <b>₹' + Number(call.target).toFixed(2) + '</b></span></div><div class="ratio"><span>Score ' + Number(stock.overall_score || 0).toFixed(1) + '</span><strong>' + Number(call.risk_reward_ratio || 0).toFixed(2) + ' : 1</strong></div><button class="btn secondary" type="button" data-demo-index="' + index + '">Use this signal</button></article>';
+        return '<article class="demo-signal-card card"><div><span class="style-badge style-' + style.toLowerCase().replaceAll('_', '') + '">' + escape(style.replaceAll('_', ' ')) + '</span><span class="badge ' + side.toLowerCase() + '">' + escape(side) + '</span></div><h3>' + escape(stock.symbol) + '</h3><p class="demo-headline">' + escape(news.headline || 'AI research setup') + '</p><div class="demo-levels"><span>Entry <b>₹' + Number(call.entry).toFixed(2) + '</b></span><span>SL <b>₹' + Number(call.stop_loss).toFixed(2) + '</b></span><span>Target <b>₹' + Number(call.target).toFixed(2) + '</b></span></div><div class="ratio"><span>Score ' + Number(stock.overall_score || 0).toFixed(1) + '</span><strong>' + Math.round(Number(call.risk_reward_ratio || 0)) + ':1</strong></div><button class="btn secondary" type="button" data-demo-index="' + index + '">Use this signal</button></article>';
       }).join('');
 
       grid.addEventListener('click', event => {
@@ -108,9 +162,11 @@
         input('symbol').value = stock.symbol || '';
         input('side').value = call.side === 'SELL' ? '2' : '1';
         input('style').value = styleMap[stock.research_style?.style] || '1';
-        input('entry').value = call.entry ?? '';
+        const cardEntry = Number(call.entry);
+        setEntryRange(call.entry ?? '', Number.isFinite(cardEntry) ? roundPrice(cardEntry + 3).toFixed(2) : '');
         input('stop').value = call.stop_loss ?? '';
-        input('target').value = call.target ?? '';
+        const cardTarget = Number(call.target);
+        input('target').value = Number.isFinite(cardTarget) ? roundPrice(cardTarget + 4).toFixed(2) : '';
         if (customRatio) customRatio.value = Number(call.risk_reward_ratio || 0).toFixed(2);
         input('brief').value = (news.headline || 'AI research setup') + '\n\n' + (news.content || '');
         update();
@@ -121,3 +177,11 @@
       grid.innerHTML = '<p class="validation">Research demo data could not be loaded.</p>';
     });
 })();
+
+
+
+
+
+
+
+

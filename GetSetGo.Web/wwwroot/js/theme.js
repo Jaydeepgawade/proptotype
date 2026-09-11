@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const root = document.documentElement;
   let saved;
   try { saved = localStorage.getItem('getsetgo-theme'); } catch {}
@@ -7,7 +7,8 @@
     const button = document.getElementById('themeToggle');
     if (!button) return;
     const dark = root.dataset.theme === 'dark';
-    button.textContent = dark ? 'Light mode' : 'Dark mode';
+    const text = button.querySelector('.theme-toggle-text');
+    if (text) text.textContent = dark ? 'Light mode' : 'Dark mode';
     button.setAttribute('aria-pressed', String(dark));
   }
   document.addEventListener('DOMContentLoaded', () => {

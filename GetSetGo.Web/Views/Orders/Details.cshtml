@@ -1,4 +1,4 @@
-@model OrderDetailsViewModel
+﻿@model OrderDetailsViewModel
 @{ ViewData["Title"] = $"Order #{Model.Order.Id}"; var order = Model.Order; }
 <div class="page-head">
     <div><div class="eyebrow">ORDER DETAILS</div><h1>@order.Symbol <span class="badge @order.Side.ToString().ToLowerInvariant()">@order.Side</span></h1><p>Order #@order.Id &middot; Simulated execution</p></div>
@@ -30,3 +30,5 @@
     </dl><p class="muted">Execution is simulated. No broker order is placed.</p></section>
     <section class="card form-card"><h2>Research summary</h2><p class="order-summary">@(Model.Signal?.AiNewsSummary ?? "Research information is unavailable for this order.")</p></section>
 </div>
+
+

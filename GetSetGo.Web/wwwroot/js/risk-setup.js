@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const form = document.querySelector('[data-risk-setup]'); if (!form) return;
   const account = form.querySelector('[data-account-capital]'), allocated = form.querySelector('[data-allocated]'), remaining = form.querySelector('[data-remaining]'), state = form.querySelector('[data-allocation-state]'), submit = form.querySelector('[data-save-risk]'), formError = form.querySelector('[data-form-error]');
   const money = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Math.max(0, value));
@@ -16,13 +16,13 @@
   function update() {
     const total = number(account); let sum = 0, valid = total >= 1000;
     form.querySelectorAll('[data-style-card]').forEach(card => {
-      const capital = number(card.querySelector('[data-style-capital]')), perTrade = number(card.querySelector('[data-risk-per-trade]')), maxRisk = number(card.querySelector('[data-max-risk]')), rewardRisk = number(card.querySelector('[data-reward-risk]'));
+      const capital = number(card.querySelector('[data-style-capital]')), perTrade = number(card.querySelector('[data-risk-per-trade]')), maxRisk = number(card.querySelector('[data-max-risk]')), rewardInput = card.querySelector('[data-reward-risk]'), rewardRisk = Math.max(1, number(rewardInput)); if (rewardInput && number(rewardInput) < 1) rewardInput.value = '1';
       const error = card.querySelector('[data-style-error]'), status = card.querySelector('[data-style-state]'); sum += capital;
       let message = '';
       if (capital > 0 && capital < 1000) message = 'Minimum allocation is ₹1,000.';
       else if (capital > 0 && maxRisk < perTrade) message = 'Maximum style risk must be at least the per-trade risk.';
       else if (capital > 0 && (perTrade < .1 || perTrade > 5 || maxRisk < .1 || maxRisk > 5)) message = 'Risk percentages must be from 0.1% to 5%.';
-      else if (capital > 0 && (rewardRisk < .1 || rewardRisk > 5)) message = 'Reward-risk ratio must be from 0.1 : 1 to 5 : 1.';
+      else if (capital > 0 && (rewardRisk < 1 || rewardRisk > 5)) message = 'Reward-risk ratio must be from 1 : 1 to 5 : 1.';
       error.textContent = message; card.classList.toggle('has-error', !!message); status.textContent = capital > 0 ? 'Active' : 'Disabled'; status.classList.toggle('active', capital > 0);
       card.querySelector('[data-style-risk]').textContent = money(capital * perTrade / 100); valid = valid && !message;
       card.querySelector('[data-ratio-display]').textContent = rewardRisk.toFixed(1) + ' : 1';
@@ -37,3 +37,6 @@
   form.querySelectorAll('input, select').forEach(input => input.addEventListener('input', update));
   form.addEventListener('submit', event => { update(); if (submit.disabled) event.preventDefault(); }); update();
 })();
+
+
+

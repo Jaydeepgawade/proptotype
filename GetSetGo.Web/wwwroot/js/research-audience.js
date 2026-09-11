@@ -41,3 +41,5 @@
     document.querySelector('[data-demo-signal-grid]')?.addEventListener('click', schedule);
     refresh();
 })();
+
+

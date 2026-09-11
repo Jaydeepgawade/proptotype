@@ -1,4 +1,4 @@
-@model IReadOnlyList<ResearchSignal>
+﻿@model IReadOnlyList<ResearchSignal>
 @using System.Globalization
 @{ViewData["Title"]="Research desk";}
 <div class="page-head"><div><h1>Research desk</h1></div><a class="btn primary" asp-action="Create">+ Generate research signal</a></div>
@@ -11,3 +11,5 @@
 <td class="numeric" data-sort="@s.EntryPrice.ToString(CultureInfo.InvariantCulture)">&#8377;@s.EntryPrice.ToString("N2")</td><td class="numeric" data-sort="@s.StopLoss.ToString(CultureInfo.InvariantCulture)">&#8377;@s.StopLoss.ToString("N2")</td><td class="numeric" data-sort="@s.TargetPrice.ToString(CultureInfo.InvariantCulture)">&#8377;@s.TargetPrice.ToString("N2")</td><td class="numeric" data-sort="@s.RewardRiskRatio.ToString(CultureInfo.InvariantCulture)">@s.RewardRiskRatio : 1</td><td data-sort="@s.ValidUntilUtc.ToString("yyyy-MM-ddTHH:mm:ss")">@s.ValidUntilUtc.ToString("dd MMM yyyy")<small>@s.ValidUntilUtc.ToString("HH:mm")</small></td><td><span class="status @(state == "Active" ? "executed" : state == "Scheduled" ? "set" : "expired")">@state</span></td><td><div class="signal-admin-actions"><a class="btn secondary" asp-action="Edit" asp-route-id="@s.Id">Edit</a>@if (s.IsActive && state != "Expired"){<form asp-action="Expire" method="post"><input type="hidden" name="id" value="@s.Id"/><button class="btn secondary" type="submit">Expire now</button></form>}@if (s.IsActive){<form asp-action="Deactivate" method="post"><input type="hidden" name="id" value="@s.Id"/><button class="btn text" type="submit">Deactivate</button></form>}</div></td></tr>
 }
 </tbody></table></div></section>
+
+

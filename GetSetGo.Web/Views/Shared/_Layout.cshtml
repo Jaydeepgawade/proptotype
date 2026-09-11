@@ -37,7 +37,7 @@
                 }
                 else { <a asp-controller="ResearchAdmin" asp-action="Index" class="@(activeNav == "ResearchAdmin" ? "active" : null)" aria-current="@(activeNav == "ResearchAdmin" ? "page" : null)">Research desk</a> }
             </nav>
-            <div class="user-menu"><button type="button" id="themeToggle" class="btn secondary" aria-pressed="false">Dark mode</button><select id="languageSelector" aria-label="Language"><option value="en">English</option><option value="mr">&#2350;&#2352;&#2366;&#2336;&#2368;</option><option value="hi">&#2361;&#2367;&#2306;&#2342;&#2368;</option><option value="ko">한국어</option></select>@if(User.IsInRole("Client")){<details class="notification-panel"><summary>&#128276;@if(notifications.Any(x=>!x.IsRead)){<i>@notifications.Count(x=>!x.IsRead)</i>}</summary><div><b>Notifications</b>@if(notifications.Count==0){<p>No notifications yet.</p>}else{foreach(var note in notifications){<p class="@(note.IsRead?"":"unread")">@note.Message</p>}<form asp-controller="Notifications" asp-action="MarkAllRead" method="post"><button class="link-button">Mark all read</button></form>}</div></details>}else{<span>@User.Identity.Name</span>}<form asp-controller="Account" asp-action="Logout" method="post"><button class="link-button">Logout</button></form></div>
+            <div class="user-menu"><button type="button" id="themeToggle" class="theme-toggle" aria-pressed="false"><span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span><span class="theme-toggle-text">Dark mode</span></button><select id="languageSelector" aria-label="Language"><option value="en">English</option><option value="mr">&#2350;&#2352;&#2366;&#2336;&#2368;</option><option value="hi">&#2361;&#2367;&#2306;&#2342;&#2368;</option><option value="ko">한국어</option></select>@if(User.IsInRole("Client")){<details class="notification-panel"><summary>&#128276;@if(notifications.Any(x=>!x.IsRead)){<i>@notifications.Count(x=>!x.IsRead)</i>}</summary><div><b>Notifications</b>@if(notifications.Count==0){<p>No notifications yet.</p>}else{foreach(var note in notifications){<p class="@(note.IsRead?"":"unread")">@note.Message</p>}<form asp-controller="Notifications" asp-action="MarkAllRead" method="post"><button class="link-button">Mark all read</button></form>}</div></details>}else{<span>@User.Identity.Name</span>}<form asp-controller="Account" asp-action="Logout" method="post"><button class="link-button">Logout</button></form></div>
         }
     </header>
     <main class="shell">
@@ -54,6 +54,7 @@
     @await RenderSectionAsync("Scripts", required:false)
 </body>
 </html>
+
 
 
 

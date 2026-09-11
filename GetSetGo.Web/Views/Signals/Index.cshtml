@@ -1,4 +1,4 @@
-@model SignalListViewModel
+﻿@model SignalListViewModel
 @using System.Globalization
 @{ViewData["Title"]="GET signals";}
 <div class="page-head"><div><div class="eyebrow">STEP 2</div><h1>Research selected for you</h1><p>Active signals matching your style and reward-risk rules.</p></div><a class="btn secondary" asp-controller="Risk" asp-action="Index">Edit risk setup</a></div>
@@ -23,7 +23,7 @@ else
     }
     else
     {
-        <div class="order-capital-check"><small>Need &#8377;@orderCheck.RequiredForOneShare.ToString("N2") · &#8377;@orderCheck.AvailableStyleCapital.ToString("N2") available</small>
+        <div class="order-capital-check"><small>Need &#8377;@orderCheck.RequiredForOneShare.ToString("N2") Â· &#8377;@orderCheck.AvailableStyleCapital.ToString("N2") available</small>
 <form asp-action="Set" method="post" class="set-order-action" data-api="/api/v1/signals/@s.Id/set" data-preview-api="/api/v1/signals/@s.Id/preview" data-redirect="/Orders/Set"><input type="hidden" name="id" value="@s.Id"/><button class="btn primary" type="submit">SET<span class="sr-only"> @s.Symbol</span></button></form>
         </div>
     }
@@ -32,4 +32,6 @@ else
 }
 </tbody></table></div></section>
 <dialog id="setConfirmDialog" class="set-confirm-dialog"><form method="dialog" class="set-confirm-card"><div class="eyebrow">ORDER CONFIRMATION</div><h2 id="setConfirmTitle">Review order</h2><p id="setConfirmMessage" class="muted"></p><dl class="order-facts"><div><dt>Entry / stop / target</dt><dd id="setConfirmLevels"></dd></div><div><dt>Quantity</dt><dd id="setConfirmQuantity"></dd></div><div><dt>Required order value</dt><dd id="setConfirmValue"></dd></div><div><dt>Available style capital</dt><dd id="setConfirmCapital"></dd></div><div><dt>Maximum possible loss</dt><dd id="setConfirmLoss"></dd></div><div><dt>Reward : risk</dt><dd id="setConfirmRatio"></dd></div></dl><div class="set-confirm-actions"><button class="btn secondary" value="cancel">Cancel</button><button class="btn primary" id="confirmSetButton" type="button">Confirm SET</button></div></form></dialog>
-<dialog id="chartDialog" class="chart-dialog"><div class="chart-head"><div><div class="eyebrow">DEMO OHLC · 1 DAY</div><h2 id="chartTitle">Price chart</h2></div><button type="button" class="chart-close" aria-label="Close">×</button></div><div class="chart-legend"><span><i class="entry-dot"></i>Entry</span><span><i class="stop-dot"></i>Stop-loss</span><span><i class="target-dot"></i>Target</span><b>Sample data—not live market prices</b></div><div id="priceChart"></div><div id="chartError" class="validation"></div></dialog>
+<dialog id="chartDialog" class="chart-dialog"><div class="chart-head"><div><div class="eyebrow">DEMO OHLC Â· 1 DAY</div><h2 id="chartTitle">Price chart</h2></div><button type="button" class="chart-close" aria-label="Close">Ã—</button></div><div class="chart-legend"><span><i class="entry-dot"></i>Entry</span><span><i class="stop-dot"></i>Stop-loss</span><span><i class="target-dot"></i>Target</span><b>Sample dataâ€”not live market prices</b></div><div id="priceChart"></div><div id="chartError" class="validation"></div></dialog>
+
+

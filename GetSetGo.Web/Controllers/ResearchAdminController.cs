@@ -1,4 +1,4 @@
-using GetSetGo.Web.Data;
+﻿using GetSetGo.Web.Data;
 using GetSetGo.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +13,9 @@ public sealed class ResearchAdminController(IAppRepository repository):Controlle
     public async Task<IActionResult> Create()
     {
         await LoadPublishedSymbolsAsync();
-        return View(new ResearchSignal{ValidFromUtc=DateTime.UtcNow,ValidUntilUtc=DateTime.UtcNow.AddDays(2)});
+        var now = DateTime.UtcNow;
+        now = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, DateTimeKind.Utc);
+        return View(new ResearchSignal{ValidFromUtc=now,ValidUntilUtc=now.AddDays(2)});
     }
     [HttpPost,ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ResearchSignal model)
@@ -81,3 +83,5 @@ public sealed class ResearchAdminController(IAppRepository repository):Controlle
             .ToArray();
     }
 }
+
+
