@@ -25,7 +25,7 @@
       else if (capital > 0 && (rewardRisk < 1 || rewardRisk > 5)) message = 'Reward-risk ratio must be from 1 : 1 to 5 : 1.';
       error.textContent = message; card.classList.toggle('has-error', !!message); status.textContent = capital > 0 ? 'Active' : 'Disabled'; status.classList.toggle('active', capital > 0);
       card.querySelector('[data-style-risk]').textContent = money(capital * perTrade / 100); valid = valid && !message;
-      card.querySelector('[data-ratio-display]').textContent = rewardRisk.toFixed(1) + ' : 1';
+      card.querySelector('[data-ratio-display]').textContent = rewardRisk.toFixed(0) + ' : 1';
     });
     const left = total - sum; allocated.textContent = money(sum); remaining.textContent = money(left); state.classList.toggle('over', left < 0);
     if (total < 1000) state.textContent = 'Account capital must be at least ₹1,000.';
